@@ -18,11 +18,24 @@ extern float HalfFragtSize;
 extern float HalfBlockSize;
 extern float HalfChunkkSize;
 
+struct Vec2
+{
+	float X;
+	float Y;
+};
+
 struct Vec3
 {
 	float X;
 	float Y;
 	float Z;
+};
+
+struct RGB
+{
+	uint8_t R;
+	uint8_t G;
+	uint8_t B;
 };
 
 struct Mat3x3

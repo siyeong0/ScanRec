@@ -17,7 +17,7 @@ public:
 	~ScanRec();
 
 	void SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic);
-	void Step(float* camExtrinsic, uint8_t* rgb, uint16_t* depth);
+	void Step(float* camExtrinsic, RGB* rgb, uint16_t* depth);
 
 private:
 	CameraInstrinsic mCamIntrnsic;
@@ -31,4 +31,6 @@ private:
 	size_t mWidth;
 	size_t mHeight;
 	float mDepthScale;
+
+	Vec2* mUVBuffer;
 };
