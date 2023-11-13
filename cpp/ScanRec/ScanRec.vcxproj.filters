@@ -20,6 +20,9 @@
     <Filter Include="Chunk">
       <UniqueIdentifier>{72105431-6ddd-4d9b-9a08-dd53055c9a3c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ScanRec">
+      <UniqueIdentifier>{9d4555a7-2a45-4b86-87ca-8856a6143beb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -34,6 +37,9 @@
     </ClCompile>
     <ClCompile Include="Chunk.cpp">
       <Filter>Chunk</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanRec.cpp">
+      <Filter>ScanRec</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -51,6 +57,9 @@
     </ClInclude>
     <ClInclude Include="Chunk.h">
       <Filter>Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanRec.h">
+      <Filter>ScanRec</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

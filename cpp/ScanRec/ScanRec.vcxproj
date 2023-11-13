@@ -132,6 +132,7 @@
     <ClCompile Include="Fragment.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Block.cpp" />
+    <ClCompile Include="ScanRec.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Chunk.h" />
@@ -139,6 +140,7 @@
     <ClInclude Include="Fragment.h" />
     <ClInclude Include="LinkedList.hpp" />
     <ClInclude Include="Block.h" />
+    <ClInclude Include="ScanRec.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

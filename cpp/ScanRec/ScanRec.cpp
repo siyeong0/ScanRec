@@ -26,4 +26,6 @@ void ScanRec::Step(float* camExtrinsic, uint8_t* rgb, uint16_t* depth)
 	memcpy(&(rotMat._00), &camExtrinsic[0], sizeof(float) * 3);
 	memcpy(&(rotMat._10), &camExtrinsic[4], sizeof(float) * 3);
 	memcpy(&(rotMat._20), &camExtrinsic[8], sizeof(float) * 3);
+
+
 }
