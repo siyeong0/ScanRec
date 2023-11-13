@@ -5,9 +5,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="LinkedList">
-      <UniqueIdentifier>{e82d44bd-37a2-444d-b34a-a4b01b459ecd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Block">
       <UniqueIdentifier>{fd30d9a5-6ee2-4c8f-9e31-515425e5bf71}</UniqueIdentifier>
     </Filter>
@@ -16,6 +13,12 @@
     </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{cd4f46e7-3f70-433a-b9df-858699c9f776}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LinkedList">
+      <UniqueIdentifier>{e82d44bd-37a2-444d-b34a-a4b01b459ecd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Chunk">
+      <UniqueIdentifier>{72105431-6ddd-4d9b-9a08-dd53055c9a3c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -28,6 +31,9 @@
     </ClCompile>
     <ClCompile Include="Common.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Chunk.cpp">
+      <Filter>Chunk</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -42,6 +48,9 @@
     </ClInclude>
     <ClInclude Include="Common.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Chunk.h">
+      <Filter>Chunk</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,17 +1,16 @@
 #pragma once
-#include "Common.h"
-#include "Fragment.h"
+#include "Block.h"
 
-class Block
+class Chunk
 {
 public:
-	Block();
-	~Block();
+	Chunk();
+	~Chunk();
 
 	void AddPoint(float* center, PointData& data, uint8_t label);
 
 	void Write(float* center);
 	void Read(float* center);
 private:
-	Fragment** mFrags;
+	Block** mBlocks;
 };

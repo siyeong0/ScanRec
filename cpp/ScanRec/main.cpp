@@ -1,19 +1,30 @@
 #include <iostream>
-#include "Block.h"
+#include "Chunk.h"
+#include <random>
 
 int main(void)
 {
-	Block bl = Block();
-	float center[3] = { 0,0,0 };
-	float data[9] = { 0.2, -0.1, 0.4
-					, 0.0, 1.0, 0.0
-					, 1.0, 0.0, 0.0 };
-	uint8_t label = 4;
-	bl.AddPoint(center, data, label);
-	data[0] += 0.0002;
-	bl.AddPoint(center, data, label);
-	label = 3;
-	bl.AddPoint(center, data, label);
+	Chunk chunk000 = Chunk();
+	Chunk chunk100 = Chunk();
+	Chunk chunk010 = Chunk();
+	float center000[3] = {0.f, 0.f, 0.f};
+	float center100[3] = {8.f, 0.f, 0.f};
+	float center010[3] = {0.f, 8.f ,0.f};
+
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+	for (size_t i = 0; i < 256; i++)
+	{
+		PointData data;
+		data.X = dis(gen) * 4.f + 8.f;
+		data.Y = dis(gen) * 4.f;
+		data.Z = dis(gen) * 4.f;
+		data.R = 128;
+		data.G = 128;
+		data.B = 128;
+		chunk100.AddPoint(center100, data, 3);
+	}
 
 	return 0;
 }

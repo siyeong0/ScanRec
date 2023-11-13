@@ -2,19 +2,20 @@
 #include <cstdint>
 #include <iostream>
 #include <numeric>
+#include "Common.h"
 #include "LinkedList.hpp"
 
+enum
+{
+	POINTS_PER_FRAG = 16,
+	COLOR_OFFSET_IN_FLOAT = 16 * 3,
+	BYTES_PER_POINT = 15
+};
 const float PCD_EMPTY_VAL = std::numeric_limits<float>::max();
-const size_t PCD_OFFSET = 9;	// 3(points) + 3(normals) + 3(colors)
-const size_t BYTES_PER_POINT = 9 * sizeof(float);
 
 class Fragment
 {
 public:
-	enum
-	{
-		POINTS_PER_FRAG = 16
-	};
 	struct LabelCount
 	{
 		uint32_t Label : 8;
@@ -24,16 +25,17 @@ public:
 	Fragment();
 	~Fragment();
 
-	bool AddPoint(float* data, uint8_t label, std::string fragPath);
+	bool AddPoint(PointData& data, uint8_t label);
 
-	const LinkedList<LabelCount>& GetLabelCountList(std::string fragPath);
-	float* GetPcd(std::string fragPath);
+	uint8_t GetLabel();
+	const LinkedList<LabelCount>& GetLabelCountList();
+	void* GetPcd();
 
-	void Write(std::string fragPath);
-	void Read(std::string fragPath);
+	void Write(float* center);
+	void Read(float* center);
 private:
 	void addLabel(uint8_t label, size_t pointIdx);
 private:
 	LinkedList<LabelCount> mLabelCountList;
-	float* mPcd;
+	void* mPcd;
 };
