@@ -4,13 +4,16 @@
 class Chunk
 {
 public:
-	Chunk();
+	Chunk(const Vector3& center);
 	~Chunk();
 
-	void AddPoint(float* center, PointData& data, uint8_t label);
+	void AddPoint(PointData& data, uint8_t label);
+	const Vector3& GetCenter();
+	bool Include(const Vector3& point);
 
-	void Write(float* center);
-	void Read(float* center);
+	void Write(const Vector3& center);
+	void Read(const Vector3& center);
 private:
 	Block** mBlocks;
+	const Vector3 mCenter;
 };

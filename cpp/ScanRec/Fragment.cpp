@@ -7,7 +7,9 @@ Fragment::Fragment()
 	: mLabelCountList(LinkedList<LabelCount>())
 	, mPcd(nullptr)
 {
-	mPcd = reinterpret_cast<void*>(new uint8_t[POINTS_PER_FRAG * BYTES_PER_POINT]);
+	void* t = nullptr;
+	t = malloc(POINTS_PER_FRAG * BYTES_PER_POINT);
+	mPcd = t;
 	float* fPcd = reinterpret_cast<float*>(mPcd);
 	std::fill(fPcd, fPcd + POINTS_PER_FRAG * 3, PCD_EMPTY_VAL);
 }
@@ -18,21 +20,23 @@ Fragment::~Fragment()
 	{
 		return;
 	}
-	delete[] mPcd;
+	free(mPcd);
 }
 
 bool Fragment::AddPoint(PointData& data, uint8_t label)
 {
 	float* fPcd = reinterpret_cast<float*>(mPcd);
+	uint8_t* uPcd = reinterpret_cast<uint8_t*>(fPcd + COLOR_OFFSET_IN_FLOAT);
 	// find empty memory
 	for (int i = 0; i < POINTS_PER_FRAG; i++)
 	{
-		float* pcdPtr = &fPcd[i * 3];
+		float* poiPtr = &fPcd[i * 3];
+		uint8_t* colPtr = &uPcd[i * 3];
 		// add data
-		if (pcdPtr[0] == PCD_EMPTY_VAL)
+		if (poiPtr[0] == PCD_EMPTY_VAL)
 		{
-			memcpy(pcdPtr, &data, sizeof(float) * 3);
-			memcpy(pcdPtr + COLOR_OFFSET_IN_FLOAT, &(data.R), sizeof(uint8_t) * 3);
+			memcpy(poiPtr, &data, sizeof(float) * 3);
+			memcpy(colPtr, &(data.R), sizeof(uint8_t) * 3);
 			addLabel(label, i);
 
 			return true;
@@ -96,7 +100,7 @@ void Fragment::addLabel(uint8_t label, size_t pointIdx)
 	mLabelCountList.Append(lc);
 }
 
-void Fragment::Write(float* center)
+void Fragment::Write(const Vector3& center)
 {
 	std::string fragPath = FRAGMENT_CACHE_PATH;
 	fragPath += centerToString(center);
@@ -114,7 +118,7 @@ void Fragment::Write(float* center)
 	fout.close();
 }
 
-void Fragment::Read(float* center)
+void Fragment::Read(const Vector3& center)
 {
 	std::string fragPath = FRAGMENT_CACHE_PATH;
 	fragPath += centerToString(center);

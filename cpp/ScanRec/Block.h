@@ -8,10 +8,10 @@ public:
 	Block();
 	~Block();
 
-	void AddPoint(float* center, PointData& data, uint8_t label);
+	void AddPoint(const Vector3& center, PointData& data, uint8_t label);
 
-	void Write(float* center);
-	void Read(float* center);
+	void Write(const Vector3& center);
+	void Read(const Vector3& center);
 private:
 	Fragment** mFrags;
 };

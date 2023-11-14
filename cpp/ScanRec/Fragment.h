@@ -11,7 +11,7 @@ enum
 	COLOR_OFFSET_IN_FLOAT = 16 * 3,
 	BYTES_PER_POINT = 15
 };
-const float PCD_EMPTY_VAL = std::numeric_limits<float>::max();
+const float PCD_EMPTY_VAL = 9e+20f;
 
 class Fragment
 {
@@ -31,8 +31,8 @@ public:
 	const LinkedList<LabelCount>& GetLabelCountList();
 	void* GetPcd();
 
-	void Write(float* center);
-	void Read(float* center);
+	void Write(const Vector3& center);
+	void Read(const Vector3& center);
 private:
 	void addLabel(uint8_t label, size_t pointIdx);
 private:

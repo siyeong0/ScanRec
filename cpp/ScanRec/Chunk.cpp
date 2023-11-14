@@ -1,7 +1,8 @@
 #include "Chunk.h"
 
-Chunk::Chunk()
+Chunk::Chunk(const Vector3& center)
 	: mBlocks(nullptr)
+	, mCenter(center)
 {
 	mBlocks = new Block*[NumBlocksInChunk];
 	memset(mBlocks, 0, sizeof(Block*) * NumBlocksInChunk);
@@ -21,11 +22,11 @@ Chunk::~Chunk()
 	delete[] mBlocks;
 }
 
-void Chunk::AddPoint(float* center, PointData& data, uint8_t label)
+void Chunk::AddPoint(PointData& data, uint8_t label)
 {
-	float cx = center[0];
-	float cy = center[1];
-	float cz = center[2];
+	float cx = mCenter.x;
+	float cy = mCenter.y;
+	float cz = mCenter.z;
 	float x = data.X;
 	float y = data.Y;
 	float z = data.Z;
@@ -35,10 +36,10 @@ void Chunk::AddPoint(float* center, PointData& data, uint8_t label)
 	size_t idxY = size_t((y - cy + HalfChunkkSize) / BlockSize);
 	size_t idxZ = size_t((z - cz + HalfChunkkSize) / BlockSize);
 
-	float blockCenter[3];
-	memcpy(blockCenter, center, sizeof(float) * 3);
+	Vector3 blockCenter;
+	memcpy(&blockCenter, &mCenter, sizeof(float) * 3);
 	size_t indices[3] = { idxX, idxY, idxZ };
-	centerFromIdx(blockCenter, indices, NumBlocksInSide, BlockSize);
+	centerFromIdx(&blockCenter, indices, NumBlocksInSide, BlockSize);
 
 	size_t size = size_t(NumBlocksInSide);
 	Block** block = &mBlocks[idxX * size * size + idxY * size + idxZ];
@@ -49,7 +50,21 @@ void Chunk::AddPoint(float* center, PointData& data, uint8_t label)
 	(*block)->AddPoint(blockCenter, data, label);
 }
 
-void Chunk::Write(float* center)
+const Vector3& Chunk::GetCenter()
+{
+	return mCenter;
+}
+
+bool Chunk::Include(const Vector3& point)
+{
+	float dx = fabs(mCenter.x - point.x);
+	float dy = fabs(mCenter.y - point.y);
+	float dz = fabs(mCenter.z - point.z);
+
+	return (dx <= HalfChunkkSize && dy <= HalfChunkkSize && dz <= HalfChunkkSize);
+}
+
+void Chunk::Write(const Vector3& center)
 {
 	std::string ChunkPath = CHUNK_CACHE_PATH;
 	ChunkPath += centerToString(center);
@@ -71,10 +86,10 @@ void Chunk::Write(float* center)
 					fout.write(reinterpret_cast<const char*>(&y), sizeof(size_t));
 					fout.write(reinterpret_cast<const char*>(&z), sizeof(size_t));
 
-					float blockCenter[3];
-					memcpy(blockCenter, center, sizeof(float) * 3);
+					Vector3 blockCenter;
+					memcpy(&blockCenter, &center, sizeof(float) * 3);
 					size_t indices[3] = { x, y, z };
-					centerFromIdx(blockCenter, indices, NumBlocksInSide, BlockSize);
+					centerFromIdx(&blockCenter, indices, NumBlocksInSide, BlockSize);
 					(*block)->Write(blockCenter);
 
 					delete *block;
@@ -87,7 +102,7 @@ void Chunk::Write(float* center)
 	fout.close();
 }
 
-void Chunk::Read(float* center)
+void Chunk::Read(const Vector3& center)
 {
 	std::string ChunkPath = CHUNK_CACHE_PATH;
 	ChunkPath += centerToString(center);
@@ -107,9 +122,9 @@ void Chunk::Read(float* center)
 		Block** block = &mBlocks[x * size * size + y * size + z];
 		*block = new Block;
 
-		float blockCenter[3];
-		memcpy(blockCenter, center, sizeof(float) * 3);
-		centerFromIdx(blockCenter, indices, NumBlocksInSide, BlockSize);
+		Vector3 blockCenter;
+		memcpy(&blockCenter, &center, sizeof(float) * 3);
+		centerFromIdx(&blockCenter, indices, NumBlocksInSide, BlockSize);
 		(*block)->Read(blockCenter);
 	}
 

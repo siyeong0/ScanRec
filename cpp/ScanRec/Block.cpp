@@ -32,11 +32,11 @@ Block::~Block()
 	delete[] mFrags;
 }
 
-void Block::AddPoint(float* center, PointData& data, uint8_t label)
+void Block::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 {
-	float cx = center[0];
-	float cy = center[1];
-	float cz = center[2];
+	float cx = center.x;
+	float cy = center.y;
+	float cz = center.z;
 	float x = data.X;
 	float y = data.Y;
 	float z = data.Z;
@@ -50,13 +50,13 @@ void Block::AddPoint(float* center, PointData& data, uint8_t label)
 	Fragment** frag = &mFrags[idxX * size * size + idxY * size + idxZ];
 	if (*frag == nullptr)
 	{
-		*frag = new Fragment;
+		*frag = new Fragment();
 	}
 	(*frag)->AddPoint(data, label);
 }
 
 
-void Block::Write(float* center)
+void Block::Write(const Vector3& center)
 {
 	std::string blockPath = BLOCK_CACHE_PATH;
 	blockPath += centerToString(center);
@@ -78,10 +78,10 @@ void Block::Write(float* center)
 					fout.write(reinterpret_cast<const char*>(&y), sizeof(size_t));
 					fout.write(reinterpret_cast<const char*>(&z), sizeof(size_t));
 
-					float fragCenter[3];
-					memcpy(fragCenter, center, sizeof(float) * 3);
+					Vector3 fragCenter;
+					memcpy(&fragCenter, &center, sizeof(float) * 3);
 					size_t indices[3] = { x, y, z };
-					centerFromIdx(fragCenter, indices, NumFragsInSide, FragmentSize);
+					centerFromIdx(&fragCenter, indices, NumFragsInSide, FragmentSize);
 					(*frag)->Write(fragCenter);
 
 					delete* frag;
@@ -94,7 +94,7 @@ void Block::Write(float* center)
 	fout.close();
 }
 
-void Block::Read(float* center)
+void Block::Read(const Vector3& center)
 {
 	std::string blockPath = BLOCK_CACHE_PATH;
 	blockPath += centerToString(center);
@@ -114,9 +114,9 @@ void Block::Read(float* center)
 		Fragment** frag = &mFrags[x * size * size + y * size + z];
 		*frag = new Fragment;
 
-		float fragCenter[3];
-		memcpy(fragCenter, center, sizeof(float) * 3);
-		centerFromIdx(fragCenter, indices, NumFragsInSide, FragmentSize);
+		Vector3 fragCenter;
+		memcpy(&fragCenter, &center, sizeof(float) * 3);
+		centerFromIdx(&fragCenter, indices, NumFragsInSide, FragmentSize);
 		(*frag)->Read(fragCenter);
 	}
 

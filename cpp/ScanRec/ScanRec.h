@@ -7,30 +7,23 @@ class ScanRec
 public:
 	struct CameraInstrinsic
 	{
-		float mFocalLengthX;
-		float mFocalLengthY;
-		float mCenterX;
-		float mCenterY;
+		Vector2 FocalLength;
+		Vector2 Center;
 	};
 public:
 	ScanRec(size_t width, size_t height, float depthScale);
 	~ScanRec();
 
 	void SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic);
-	void Step(float* camExtrinsic, RGB* rgb, uint16_t* depth);
+	void Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth);
 
 private:
 	CameraInstrinsic mCamIntrnsic;
-	struct ChunkData
-	{
-		Chunk Chunk;
-		Vec3 Center;
-	};
-	std::vector<ChunkData> mChunks;
+	Chunk* mChunk;
 
 	size_t mWidth;
 	size_t mHeight;
 	float mDepthScale;
 
-	Vec2* mUVBuffer;
+	Vector2* mUVBuffer;
 };

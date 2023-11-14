@@ -15,25 +15,25 @@ float HalfFragtSize		= FragmentSize / 2.0f;
 float HalfBlockSize		= BlockSize / 2.0f;
 float HalfChunkkSize	= ChunkSize / 2.0f;
 
-std::string centerToString(float center[])
+std::string centerToString(const Vector3& center)
 {
 	std::string path = 
-		std::to_string(center[0])
-		+ std::to_string(center[1])
-		+ std::to_string(center[2]);
+		std::to_string(center.x)
+		+ std::to_string(center.y)
+		+ std::to_string(center.z);
 	return path;
 }
 
-void centerFromIdx(float outCenter[], size_t indices[], float numInSide, float size)
+void centerFromIdx(Vector3* outCenter, size_t indices[], float numInSide, float size)
 {
-	outCenter[0] += (float(indices[0]) - numInSide * 0.5f + float(int(numInSide + 1) % 2) * 0.5f) * size;
-	outCenter[1] += (float(indices[1]) - numInSide * 0.5f + float(int(numInSide + 1) % 2) * 0.5f) * size;
-	outCenter[2] += (float(indices[2]) - numInSide * 0.5f + float(int(numInSide + 1) % 2) * 0.5f) * size;
+	outCenter->x += (float(indices[0]) - numInSide * 0.5f + float(int(numInSide + 1) % 2) * 0.5f) * size;
+	outCenter->y += (float(indices[1]) - numInSide * 0.5f + float(int(numInSide + 1) % 2) * 0.5f) * size;
+	outCenter->z += (float(indices[2]) - numInSide * 0.5f + float(int(numInSide + 1) % 2) * 0.5f) * size;
 }
 
-void idxFromCenter(size_t outIndices[], float center[], float numInSide, float size)
+void idxFromCenter(size_t outIndices[], const Vector3& center, float numInSide, float size)
 {
-	outIndices[0] = center[0] / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
-	outIndices[1] = center[1] / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
-	outIndices[2] = center[2] / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
+	outIndices[0] = center.x / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
+	outIndices[1] = center.y / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
+	outIndices[2] = center.z / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
 }
