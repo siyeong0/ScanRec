@@ -1,25 +1,29 @@
 #include "Chunk.h"
+#include "MemPool.hpp"
+
+static MemPool<NUM_BLOCKS_IN_CHUNK * sizeof(Block*), 2048> gBlockPtrArrMem;
+static MemPool<sizeof(Block), 65535> gBlockMem;
 
 Chunk::Chunk(const Vector3& center)
 	: mBlocks(nullptr)
 	, mCenter(center)
 {
-	mBlocks = new Block*[NumBlocksInChunk];
-	memset(mBlocks, 0, sizeof(Block*) * NumBlocksInChunk);
+	mBlocks = (Block**)gBlockPtrArrMem.Alloc();
+	memset(mBlocks, 0, sizeof(Block*) * NUM_BLOCKS_IN_CHUNK);
 }
 
 Chunk::~Chunk()
 {
-	for (size_t i = 0; i < NumBlocksInChunk; i++)
+	for (size_t i = 0; i < NUM_BLOCKS_IN_CHUNK; i++)
 	{
 		Block** block = &mBlocks[i];
 		if (*block != nullptr)
 		{
-			delete* block;
-			*block = nullptr;
+			(*block)->~Block();
+			gBlockMem.Free(*block);
 		}
 	}
-	delete[] mBlocks;
+	gBlockPtrArrMem.Free(mBlocks);
 }
 
 void Chunk::AddPoint(PointData& data, uint8_t label)
@@ -30,22 +34,23 @@ void Chunk::AddPoint(PointData& data, uint8_t label)
 	float x = data.X;
 	float y = data.Y;
 	float z = data.Z;
-	Assert(fabs(cx - x) <= HalfChunkkSize + 1e-4f && fabs(cy - y) <= HalfChunkkSize + 1e-4f && fabs(cz - z) <= HalfChunkkSize + 1e-4f);
+	Assert(fabs(cx - x) <= HALF_CHUNK_SIZE + 1e-4f && fabs(cy - y) <= HALF_CHUNK_SIZE + 1e-4f && fabs(cz - z) <= HALF_CHUNK_SIZE + 1e-4f);
 
-	size_t idxX = size_t((x - cx + HalfChunkkSize) / BlockSize);
-	size_t idxY = size_t((y - cy + HalfChunkkSize) / BlockSize);
-	size_t idxZ = size_t((z - cz + HalfChunkkSize) / BlockSize);
+	size_t idxX = size_t((x - cx + HALF_CHUNK_SIZE) / BLOCK_SIZE);
+	size_t idxY = size_t((y - cy + HALF_CHUNK_SIZE) / BLOCK_SIZE);
+	size_t idxZ = size_t((z - cz + HALF_CHUNK_SIZE) / BLOCK_SIZE);
 
 	Vector3 blockCenter;
 	memcpy(&blockCenter, &mCenter, sizeof(float) * 3);
 	size_t indices[3] = { idxX, idxY, idxZ };
-	centerFromIdx(&blockCenter, indices, NumBlocksInSide, BlockSize);
+	centerFromIdx(&blockCenter, indices, NUM_BLOCKS_IN_SIDE, BLOCK_SIZE);
 
-	size_t size = size_t(NumBlocksInSide);
+	size_t size = size_t(NUM_BLOCKS_IN_SIDE);
 	Block** block = &mBlocks[idxX * size * size + idxY * size + idxZ];
 	if (*block == nullptr)
 	{
-		*block = new Block;
+		*block = (Block*)gBlockMem.Alloc();
+		new (*block) Block();
 	}
 	(*block)->AddPoint(blockCenter, data, label);
 }
@@ -61,7 +66,7 @@ bool Chunk::Include(const Vector3& point)
 	float dy = fabs(mCenter.y - point.y);
 	float dz = fabs(mCenter.z - point.z);
 
-	return (dx <= HalfChunkkSize && dy <= HalfChunkkSize && dz <= HalfChunkkSize);
+	return (dx <= HALF_CHUNK_SIZE && dy <= HALF_CHUNK_SIZE && dz <= HALF_CHUNK_SIZE);
 }
 
 void Chunk::Write(const Vector3& center)
@@ -72,7 +77,7 @@ void Chunk::Write(const Vector3& center)
 	std::ofstream fout;
 	fout.open(ChunkPath, std::ios::out | std::ios::binary);
 	// write fragments
-	size_t size = size_t(NumFragsInSide);
+	size_t size = size_t(NUM_FRAGS_IN_SIDE);
 	for (size_t x = 0; x < size; x++)
 	{
 		for (size_t y = 0; y < size; y++)
@@ -89,10 +94,11 @@ void Chunk::Write(const Vector3& center)
 					Vector3 blockCenter;
 					memcpy(&blockCenter, &center, sizeof(float) * 3);
 					size_t indices[3] = { x, y, z };
-					centerFromIdx(&blockCenter, indices, NumBlocksInSide, BlockSize);
+					centerFromIdx(&blockCenter, indices, NUM_BLOCKS_IN_SIDE, BLOCK_SIZE);
 					(*block)->Write(blockCenter);
 
-					delete *block;
+					(*block)->~Block();
+					gBlockMem.Free(*block);
 					*block = nullptr;
 				}
 			}
@@ -110,7 +116,7 @@ void Chunk::Read(const Vector3& center)
 	std::ifstream fin;
 	fin.open(ChunkPath, std::ios::in | std::ios::binary);
 	// read fragments
-	size_t size = size_t(NumFragsInSide);
+	size_t size = size_t(NUM_FRAGS_IN_SIDE);
 	while (!fin.eof())
 	{
 		size_t indices[3];
@@ -120,11 +126,12 @@ void Chunk::Read(const Vector3& center)
 		size_t z = indices[2];
 
 		Block** block = &mBlocks[x * size * size + y * size + z];
-		*block = new Block;
+		*block = (Block*)gBlockMem.Alloc();
+		new (*block) Block();
 
 		Vector3 blockCenter;
 		memcpy(&blockCenter, &center, sizeof(float) * 3);
-		centerFromIdx(&blockCenter, indices, NumBlocksInSide, BlockSize);
+		centerFromIdx(&blockCenter, indices, NUM_BLOCKS_IN_SIDE, BLOCK_SIZE);
 		(*block)->Read(blockCenter);
 	}
 

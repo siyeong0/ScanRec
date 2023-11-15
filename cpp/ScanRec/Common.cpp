@@ -4,17 +4,6 @@ std::string FRAGMENT_CACHE_PATH = std::string("../cache/fragment/");
 std::string BLOCK_CACHE_PATH = std::string("../cache/block/");
 std::string CHUNK_CACHE_PATH = std::string("../cache/chunk/");
 
-float FragmentSize		= 0.05f;
-float BlockSize			= 1.0f;
-float ChunkSize			= 8.0f;
-float NumFragsInSide	= BlockSize / FragmentSize;
-float NumBlocksInSide	= ChunkSize / BlockSize;
-size_t NumFragsInBlock	= size_t(powf(floor(NumFragsInSide), 3.0));;
-size_t NumBlocksInChunk = size_t(powf(floor(NumBlocksInSide), 3.0));;
-float HalfFragtSize		= FragmentSize / 2.0f;
-float HalfBlockSize		= BlockSize / 2.0f;
-float HalfChunkkSize	= ChunkSize / 2.0f;
-
 std::string centerToString(const Vector3& center)
 {
 	std::string path = 

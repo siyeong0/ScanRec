@@ -1,4 +1,5 @@
 #include "ScanRec.h"
+#include "MemPool.hpp"
 
 ScanRec::ScanRec(size_t width, size_t height, float depthScale)
 	: mWidth(width)
@@ -8,17 +9,22 @@ ScanRec::ScanRec(size_t width, size_t height, float depthScale)
 	, mSize(0)
 	, mUVBuffer(nullptr)
 {
-	mChunks.push_back(new Chunk(Vector3(0,0,0)));
-	mUVBuffer = new Vector2[width * height];
+	Chunk* baseChunk = (Chunk*)Alloc(sizeof(Chunk));
+	new (baseChunk) Chunk(Vector3(0, 0, 0));
+	mChunks.push_back(baseChunk);
+
+	mUVBuffer = (Vector2*)Alloc(sizeof(Vector2) * width * height);
 }
 
 ScanRec::~ScanRec()
 {
+	std::cout << "Number of Chunks : " << mChunks.size() << std::endl;
 	for (auto& ptr : mChunks)
 	{
-		delete ptr;
+		ptr->~Chunk();
+		Free(ptr);
 	}
-	delete[] mUVBuffer;
+	Free(mUVBuffer);
 }
 
 void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
@@ -75,9 +81,10 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			}
 			if (!bChunkExist)
 			{
-				auto getChunkCenter = [](float v) -> float { return roundf(v / ChunkSize) * HalfChunkkSize; };
+				auto getChunkCenter = [](float v) -> float { return roundf(v / CHUNK_SIZE) * HALF_CHUNK_SIZE; };
 				Vector3 chunkCenter(getChunkCenter(data.X), getChunkCenter(data.Y), getChunkCenter(data.Z));
-				Chunk* newChunk = new Chunk(chunkCenter);
+				Chunk* newChunk = (Chunk*)Alloc(sizeof(Chunk));
+				new (newChunk) Chunk(chunkCenter);
 				newChunk->AddPoint(data, 3);
 				mChunks.push_back(newChunk);
 			}
@@ -93,7 +100,7 @@ void ScanRec::Save(std::string filename)
 	for (auto& chunk : mChunks)
 	{
 		Block** blocks = chunk->GetBlocks();
-		for (size_t bidx = 0; bidx < NumBlocksInChunk; bidx++)
+		for (size_t bidx = 0; bidx < NUM_BLOCKS_IN_CHUNK; bidx++)
 		{
 			Block* currBlock = blocks[bidx];
 			if (currBlock == nullptr)
@@ -102,7 +109,7 @@ void ScanRec::Save(std::string filename)
 			}
 
 			Fragment** frags = currBlock->GetFrags();
-			for (size_t fidx = 0; fidx < NumFragsInBlock; fidx++)
+			for (size_t fidx = 0; fidx < NUM_FRAGS_IN_BLOCK; fidx++)
 			{
 				Fragment* currFrag = frags[fidx];
 				if (currFrag == nullptr)

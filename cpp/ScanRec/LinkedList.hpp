@@ -1,6 +1,8 @@
 #pragma once
 #include <fstream>
 
+// TODO: Moemory pooling
+
 template<typename T>
 class LinkedList
 {
@@ -8,6 +10,7 @@ public:
 	class Node;
 public:
 	LinkedList()
+		: mRoot(nullptr)
 	{
 	}
 

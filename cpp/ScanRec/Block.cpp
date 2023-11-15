@@ -2,34 +2,29 @@
 #include <cmath>
 #include <string>
 #include "Common.h"
+#include "MemPool.hpp"
 
-//void Block::Config(size_t blockSizeInMeter, size_t fragSizeInMeter)
-//{
-//	BlockSize = float(blockSizeInMeter);
-//	FragmentSize = float(fragSizeInMeter);
-//	NumFragsInSide = BlockSize / FragmentSize;
-//	NumFragsInBlock = size_t(powf(floor(NumFragsInSide), 3.0));
-//	HalfBlockSize = BlockSize / 2.0f;
-//}
+static MemPool<NUM_FRAGS_IN_BLOCK * sizeof(Fragment*)> gFragPtrArrMem;
+static MemPool<sizeof(Fragment), 65535> gFragMem;
 
 Block::Block()
 	: mFrags(nullptr)
 {
-	mFrags = new Fragment*[NumFragsInBlock];
-	memset(mFrags, 0, sizeof(Fragment*) * NumFragsInBlock);
+	mFrags = (Fragment**)gFragPtrArrMem.Alloc();
+	memset(mFrags, 0, sizeof(Fragment*) * NUM_FRAGS_IN_BLOCK);
 }
 Block::~Block()
 {
-	for (size_t i = 0; i < NumFragsInBlock; i++)
+	for (size_t i = 0; i < NUM_FRAGS_IN_BLOCK; i++)
 	{
 		Fragment** frag = &mFrags[i];
 		if (*frag != nullptr)
 		{
-			delete* frag;
-			*frag = nullptr;
+			(*frag)->~Fragment();
+			gFragMem.Free(*frag);
 		}
 	}
-	delete[] mFrags;
+	gFragPtrArrMem.Free(mFrags);
 }
 
 void Block::AddPoint(const Vector3& center, PointData& data, uint8_t label)
@@ -40,17 +35,18 @@ void Block::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 	float x = data.X;
 	float y = data.Y;
 	float z = data.Z;
-	Assert(fabs(cx - x) <= HalfBlockSize + 1e-4f && fabs(cy - y) <= HalfBlockSize + 1e-4f && fabs(cz - z) <= HalfBlockSize + 1e-4f);
+	Assert(fabs(cx - x) <= HALF_BLOCK_SIZE + 1e-4f && fabs(cy - y) <= HALF_BLOCK_SIZE + 1e-4f && fabs(cz - z) <= HALF_BLOCK_SIZE + 1e-4f);
 
-	size_t idxX = size_t((x - cx + HalfBlockSize) / FragmentSize);
-	size_t idxY = size_t((y - cy + HalfBlockSize) / FragmentSize);
-	size_t idxZ = size_t((z - cz + HalfBlockSize) / FragmentSize);
+	size_t idxX = size_t((x - cx + HALF_BLOCK_SIZE) / FRAGMENT_SIZE);
+	size_t idxY = size_t((y - cy + HALF_BLOCK_SIZE) / FRAGMENT_SIZE);
+	size_t idxZ = size_t((z - cz + HALF_BLOCK_SIZE) / FRAGMENT_SIZE);
 
-	size_t size = size_t(NumFragsInSide);
+	size_t size = size_t(NUM_FRAGS_IN_SIDE);
 	Fragment** frag = &mFrags[idxX * size * size + idxY * size + idxZ];
 	if (*frag == nullptr)
 	{
-		*frag = new Fragment();
+		*frag = (Fragment*)gFragMem.Alloc();
+		new (*frag) Fragment();
 	}
 	(*frag)->AddPoint(data, label);
 }
@@ -64,7 +60,7 @@ void Block::Write(const Vector3& center)
 	std::ofstream fout;
 	fout.open(blockPath, std::ios::out | std::ios::binary);
 	// write fragments
-	size_t size = size_t(NumFragsInSide);
+	size_t size = size_t(NUM_FRAGS_IN_SIDE);
 	for (size_t x = 0; x < size; x++)
 	{
 		for (size_t y = 0; y < size; y++)
@@ -81,10 +77,11 @@ void Block::Write(const Vector3& center)
 					Vector3 fragCenter;
 					memcpy(&fragCenter, &center, sizeof(float) * 3);
 					size_t indices[3] = { x, y, z };
-					centerFromIdx(&fragCenter, indices, NumFragsInSide, FragmentSize);
+					centerFromIdx(&fragCenter, indices, NUM_FRAGS_IN_SIDE, FRAGMENT_SIZE);
 					(*frag)->Write(fragCenter);
 
-					delete* frag;
+					(*frag)->~Fragment();
+					gFragMem.Free(*frag);
 					*frag = nullptr;
 				}
 			}
@@ -102,7 +99,7 @@ void Block::Read(const Vector3& center)
 	std::ifstream fin;
 	fin.open(blockPath, std::ios::in | std::ios::binary);
 	// read fragments
-	size_t size = size_t(NumFragsInSide);
+	size_t size = size_t(NUM_FRAGS_IN_SIDE);
 	while (!fin.eof())
 	{
 		size_t indices[3];
@@ -112,11 +109,12 @@ void Block::Read(const Vector3& center)
 		size_t z = indices[2];
 
 		Fragment** frag = &mFrags[x * size * size + y * size + z];
-		*frag = new Fragment;
+		*frag = (Fragment*)gFragMem.Alloc();
+		new (*frag) Fragment();
 
 		Vector3 fragCenter;
 		memcpy(&fragCenter, &center, sizeof(float) * 3);
-		centerFromIdx(&fragCenter, indices, NumFragsInSide, FragmentSize);
+		centerFromIdx(&fragCenter, indices, NUM_FRAGS_IN_SIDE, FRAGMENT_SIZE);
 		(*frag)->Read(fragCenter);
 	}
 

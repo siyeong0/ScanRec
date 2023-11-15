@@ -12,7 +12,7 @@ enum
 	BYTES_PER_POINT = 15
 };
 const float PCD_EMPTY_VAL = 9e+20f;
-const float PCD_MIN_DIST = FragmentSize / powf(POINTS_PER_FRAG, 1.f / 3.f);
+const float PCD_MIN_DIST = FRAGMENT_SIZE / powf(POINTS_PER_FRAG, 1.f / 3.f);
 
 class Fragment
 {

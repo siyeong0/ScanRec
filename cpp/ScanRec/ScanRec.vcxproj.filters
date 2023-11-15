@@ -1,45 +1,56 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="리소스 파일">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Block">
-      <UniqueIdentifier>{fd30d9a5-6ee2-4c8f-9e31-515425e5bf71}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fragment">
-      <UniqueIdentifier>{6c27313d-286b-4b23-9d97-732ff68536ff}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{cd4f46e7-3f70-433a-b9df-858699c9f776}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="LinkedList">
-      <UniqueIdentifier>{e82d44bd-37a2-444d-b34a-a4b01b459ecd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Chunk">
-      <UniqueIdentifier>{72105431-6ddd-4d9b-9a08-dd53055c9a3c}</UniqueIdentifier>
     </Filter>
     <Filter Include="ScanRec">
       <UniqueIdentifier>{9d4555a7-2a45-4b86-87ca-8856a6143beb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MemPool">
+    <Filter Include="SpaceDivision">
+      <UniqueIdentifier>{1bfa01d8-6040-48f5-ba44-6678cd990053}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SpaceDivision\Chunk">
+      <UniqueIdentifier>{72105431-6ddd-4d9b-9a08-dd53055c9a3c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SpaceDivision\Block">
+      <UniqueIdentifier>{fd30d9a5-6ee2-4c8f-9e31-515425e5bf71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SpaceDivision\Fragment">
+      <UniqueIdentifier>{6c27313d-286b-4b23-9d97-732ff68536ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generic">
+      <UniqueIdentifier>{7fae8382-7baf-4933-924f-8fc2438e101f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generic\Container">
+      <UniqueIdentifier>{fa7ee329-7ea3-4b97-9f8c-cbc25e79f70b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generic\Container\LinkedList">
+      <UniqueIdentifier>{e82d44bd-37a2-444d-b34a-a4b01b459ecd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generic\Memory">
+      <UniqueIdentifier>{bcb17317-4426-41bb-88ed-618c988e39be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generic\Memory\MemPool">
       <UniqueIdentifier>{e17fdc7a-e43c-487a-815b-3c361375a932}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generic\Memory\Memory">
+      <UniqueIdentifier>{8ccaf6df-c83a-4346-983c-179945f9d5ec}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Block.cpp">
-      <Filter>Block</Filter>
+      <Filter>SpaceDivision\Block</Filter>
     </ClCompile>
     <ClCompile Include="Fragment.cpp">
-      <Filter>Fragment</Filter>
+      <Filter>SpaceDivision\Fragment</Filter>
     </ClCompile>
     <ClCompile Include="Common.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="Chunk.cpp">
-      <Filter>Chunk</Filter>
+      <Filter>SpaceDivision\Chunk</Filter>
     </ClCompile>
     <ClCompile Include="ScanRec.cpp">
       <Filter>ScanRec</Filter>
@@ -47,25 +58,28 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Block.h">
-      <Filter>Block</Filter>
+      <Filter>SpaceDivision\Block</Filter>
     </ClInclude>
     <ClInclude Include="LinkedList.hpp">
-      <Filter>LinkedList</Filter>
+      <Filter>Generic\Container\LinkedList</Filter>
     </ClInclude>
     <ClInclude Include="Fragment.h">
-      <Filter>Fragment</Filter>
+      <Filter>SpaceDivision\Fragment</Filter>
     </ClInclude>
     <ClInclude Include="Common.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="Chunk.h">
-      <Filter>Chunk</Filter>
+      <Filter>SpaceDivision\Chunk</Filter>
     </ClInclude>
     <ClInclude Include="ScanRec.h">
       <Filter>ScanRec</Filter>
     </ClInclude>
     <ClInclude Include="MemPool.hpp">
-      <Filter>MemPool</Filter>
+      <Filter>Generic\Memory\MemPool</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory.h">
+      <Filter>Generic\Memory\Memory</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
