@@ -17,9 +17,11 @@ public:
 	void SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic);
 	void Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth);
 
+	void Save(std::string filename);
 private:
 	CameraInstrinsic mCamIntrnsic;
-	Chunk* mChunk;
+	std::vector<Chunk*> mChunks;
+	size_t mSize;
 
 	size_t mWidth;
 	size_t mHeight;

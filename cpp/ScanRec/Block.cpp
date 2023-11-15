@@ -40,7 +40,7 @@ void Block::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 	float x = data.X;
 	float y = data.Y;
 	float z = data.Z;
-	Assert(fabs(cx - x) <= HalfBlockSize && fabs(cy - y) <= HalfBlockSize && fabs(cz - z) <= HalfBlockSize);
+	Assert(fabs(cx - x) <= HalfBlockSize + 1e-4f && fabs(cy - y) <= HalfBlockSize + 1e-4f && fabs(cz - z) <= HalfBlockSize + 1e-4f);
 
 	size_t idxX = size_t((x - cx + HalfBlockSize) / FragmentSize);
 	size_t idxY = size_t((y - cy + HalfBlockSize) / FragmentSize);
@@ -121,4 +121,9 @@ void Block::Read(const Vector3& center)
 	}
 
 	fin.close();
+}
+
+Fragment** Block::GetFrags()
+{
+	return mFrags;
 }

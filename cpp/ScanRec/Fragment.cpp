@@ -25,21 +25,31 @@ Fragment::~Fragment()
 
 bool Fragment::AddPoint(PointData& data, uint8_t label)
 {
-	float* fPcd = reinterpret_cast<float*>(mPcd);
-	uint8_t* uPcd = reinterpret_cast<uint8_t*>(fPcd + COLOR_OFFSET_IN_FLOAT);
+	float* fPcd = GetPointPtr(mPcd);
+	uint8_t* uPcd = GetColorPtr(mPcd);
 	// find empty memory
 	for (int i = 0; i < POINTS_PER_FRAG; i++)
 	{
-		float* poiPtr = &fPcd[i * 3];
+		float* pointPtr = &fPcd[i * 3];
 		uint8_t* colPtr = &uPcd[i * 3];
-		// add data
-		if (poiPtr[0] == PCD_EMPTY_VAL)
+
+		if (pointPtr[0] == PCD_EMPTY_VAL)
 		{
-			memcpy(poiPtr, &data, sizeof(float) * 3);
+			memcpy(pointPtr, &data, sizeof(float) * 3);
 			memcpy(colPtr, &(data.R), sizeof(uint8_t) * 3);
 			addLabel(label, i);
 
 			return true;
+		}
+		else
+		{
+			Vector3 currPoint(pointPtr);
+			Vector3 inputPoint(reinterpret_cast<float*>(&data));
+			float dist = (currPoint - inputPoint).Length();
+			if (dist < PCD_MIN_DIST)
+			{
+				return false;
+			}
 		}
 	}
 	//  full
@@ -132,4 +142,14 @@ void Fragment::Read(const Vector3& center)
 	mLabelCountList.Read(fin);
 
 	fin.close();
+}
+
+float* Fragment::GetPointPtr(void* pcdPtr)
+{
+	return reinterpret_cast<float*>(pcdPtr);
+}
+
+uint8_t* Fragment::GetColorPtr(void* pcdPtr)
+{
+	return reinterpret_cast<uint8_t*>(GetPointPtr(pcdPtr) + COLOR_OFFSET_IN_FLOAT);
 }

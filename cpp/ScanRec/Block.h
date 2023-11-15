@@ -12,6 +12,8 @@ public:
 
 	void Write(const Vector3& center);
 	void Read(const Vector3& center);
+
+	Fragment** GetFrags();
 private:
 	Fragment** mFrags;
 };

@@ -41,7 +41,6 @@ class Pcd:
         # pcd = pcd.remove_duplicated_points()
         
         pcd.remove_non_finite_points()
-        pcd.remove_duplicated_points()
         
         self.pcd.points.extend(pcd.points)
         self.pcd.normals.extend(pcd.normals)

@@ -23,6 +23,9 @@
     <Filter Include="ScanRec">
       <UniqueIdentifier>{9d4555a7-2a45-4b86-87ca-8856a6143beb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MemPool">
+      <UniqueIdentifier>{e17fdc7a-e43c-487a-815b-3c361375a932}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -60,6 +63,9 @@
     </ClInclude>
     <ClInclude Include="ScanRec.h">
       <Filter>ScanRec</Filter>
+    </ClInclude>
+    <ClInclude Include="MemPool.hpp">
+      <Filter>MemPool</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

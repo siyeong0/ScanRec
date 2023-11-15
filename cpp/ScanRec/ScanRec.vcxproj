@@ -142,6 +142,7 @@
     <ClInclude Include="Fragment.h" />
     <ClInclude Include="LinkedList.hpp" />
     <ClInclude Include="Block.h" />
+    <ClInclude Include="MemPool.hpp" />
     <ClInclude Include="ScanRec.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

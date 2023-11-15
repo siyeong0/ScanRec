@@ -30,7 +30,7 @@ void Chunk::AddPoint(PointData& data, uint8_t label)
 	float x = data.X;
 	float y = data.Y;
 	float z = data.Z;
-	Assert(fabs(cx - x) <= HalfChunkkSize && fabs(cy - y) <= HalfChunkkSize && fabs(cz - z) <= HalfChunkkSize);
+	Assert(fabs(cx - x) <= HalfChunkkSize + 1e-4f && fabs(cy - y) <= HalfChunkkSize + 1e-4f && fabs(cz - z) <= HalfChunkkSize + 1e-4f);
 
 	size_t idxX = size_t((x - cx + HalfChunkkSize) / BlockSize);
 	size_t idxY = size_t((y - cy + HalfChunkkSize) / BlockSize);
@@ -129,4 +129,9 @@ void Chunk::Read(const Vector3& center)
 	}
 
 	fin.close();
+}
+
+Block** Chunk::GetBlocks()
+{
+	return mBlocks;
 }

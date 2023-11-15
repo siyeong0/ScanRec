@@ -4,15 +4,15 @@ import cv2 as cv
 import open3d as o3d
 
 if __name__ == "__main__":
-
     lines = []
-    file = open("pcd.txt")
+    file = open("../pcd.txt")
     while True:
         line = file.readline()
         if not line: break
         lines.append(line.split(','))
 
     n = len(lines)
+    print(f"Number of Points : {n}")
     points = np.zeros((n, 3), dtype=np.float32)
     colors = np.zeros((n, 3), dtype=np.float32)
     for i, data in enumerate(lines):
@@ -23,4 +23,8 @@ if __name__ == "__main__":
     pcd.points = o3d.utility.Vector3dVector(points)
     pcd.colors = o3d.utility.Vector3dVector(colors / 255)
 
-    o3d.visualization.draw_geometries([pcd])
+    vis = [pcd]
+    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
+    size=0.6, origin=[0, 0, 0])
+    vis.append(mesh_frame)
+    o3d.visualization.draw_geometries(vis)

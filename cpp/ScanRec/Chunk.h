@@ -13,6 +13,8 @@ public:
 
 	void Write(const Vector3& center);
 	void Read(const Vector3& center);
+
+	Block** GetBlocks();
 private:
 	Block** mBlocks;
 	const Vector3 mCenter;

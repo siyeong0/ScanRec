@@ -2,7 +2,7 @@ import numpy as np
 import cv2 as cv
 import open3d as o3d
 
-from smot import SMot
+#from smot import SMot
 from pcd import Pcd
 
 import struct
@@ -44,11 +44,11 @@ class Reader:
         return None
                 
 if __name__ == "__main__":
-    smot = SMot()
+    #smot = SMot()
 
     static_pcd_id = 1023
     pcd_dict = {static_pcd_id: Pcd()}
-    reader = Reader("2023-11-09-17-09-09", 1014, 1100, 10)
+    reader = Reader("../resources/2023-11-09-17-09-09", 1014, 1700, 20)
 
     done = False
     while True:
@@ -60,10 +60,10 @@ if __name__ == "__main__":
         cx, cy, fx, fy = cam_intrinsic[0,2], cam_intrinsic[1,2], cam_intrinsic[0,0], cam_intrinsic[1,1]
         Pcd.set_camera_intrinsic(w,h,fx,fy,cx,cy)  
         
-        id_list, class_list, box_list, mask_list = smot.update(rgb)
+        #id_list, class_list, box_list, mask_list = smot.update(rgb)
         static_depth = np.copy(depth)
-        for id, cl, box, mask in zip(id_list, class_list, box_list, mask_list):
-        #if False:
+        #for id, cl, box, mask in zip(id_list, class_list, box_list, mask_list):
+        if False:
             id = cl+1
             object_rgb = np.copy(rgb)
             object_depth = np.copy(depth)
@@ -81,7 +81,6 @@ if __name__ == "__main__":
             
         static_pcd = pcd_dict[static_pcd_id].add(rgb, static_depth, cam_extrinsic)
     pcds = []
-    print(len(pcd_dict.keys()))
     for pcd in pcd_dict.values():
         curr_pcd = pcd.get_o3d_pcd()
         pcds.append(curr_pcd)
@@ -90,20 +89,20 @@ if __name__ == "__main__":
             continue
         
         # pcd to mesh
-        distances = curr_pcd.compute_nearest_neighbor_distance()
-        avg_dist = np.mean(distances)
-        radius = 3 * avg_dist
-        bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(curr_pcd,o3d.utility.DoubleVector([radius, radius * 2]))
+        # distances = curr_pcd.compute_nearest_neighbor_distance()
+        # avg_dist = np.mean(distances)
+        # radius = 3 * avg_dist
+        # bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(curr_pcd,o3d.utility.DoubleVector([radius, radius * 2]))
         
-        bbox = curr_pcd.get_axis_aligned_bounding_box() 
-        mesh = bpa_mesh.crop(bbox)
+        # bbox = curr_pcd.get_axis_aligned_bounding_box() 
+        # mesh = bpa_mesh.crop(bbox)
         
-        o3d.visualization.draw_geometries([curr_pcd])
-        o3d.visualization.draw_geometries([mesh])
+        # o3d.visualization.draw_geometries([curr_pcd])
+        # o3d.visualization.draw_geometries([mesh])
         
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
     size=0.6, origin=[0, 0, 0])
     pcds.append(mesh_frame)
     o3d.visualization.draw_geometries(pcds)
-    o3d.io.write_point_cloud("result", pcds[1], write_ascii=True)
+    o3d.io.write_point_cloud("result", pcds[0], write_ascii=True)
         
