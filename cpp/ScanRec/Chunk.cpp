@@ -1,14 +1,14 @@
 #include "Chunk.h"
 #include "MemPool.hpp"
 
-static MemPool<NUM_BLOCKS_IN_CHUNK * sizeof(Block*), 2048> gBlockPtrArrMem;
-static MemPool<sizeof(Block), 65535> gBlockMem;
+static MemPool<NUM_BLOCKS_IN_CHUNK * sizeof(Block*), 2048> gBlockPtrArrPool;
+static MemPool<sizeof(Block), 65535> gBlockPool;
 
 Chunk::Chunk(const Vector3& center)
 	: mBlocks(nullptr)
 	, mCenter(center)
 {
-	mBlocks = (Block**)gBlockPtrArrMem.Alloc();
+	mBlocks = (Block**)gBlockPtrArrPool.Alloc();
 	memset(mBlocks, 0, sizeof(Block*) * NUM_BLOCKS_IN_CHUNK);
 }
 
@@ -20,10 +20,10 @@ Chunk::~Chunk()
 		if (*block != nullptr)
 		{
 			(*block)->~Block();
-			gBlockMem.Free(*block);
+			gBlockPool.Free(*block);
 		}
 	}
-	gBlockPtrArrMem.Free(mBlocks);
+	gBlockPtrArrPool.Free(mBlocks);
 }
 
 void Chunk::AddPoint(PointData& data, uint8_t label)
@@ -49,7 +49,7 @@ void Chunk::AddPoint(PointData& data, uint8_t label)
 	Block** block = &mBlocks[idxX * size * size + idxY * size + idxZ];
 	if (*block == nullptr)
 	{
-		*block = (Block*)gBlockMem.Alloc();
+		*block = (Block*)gBlockPool.Alloc();
 		new (*block) Block();
 	}
 	(*block)->AddPoint(blockCenter, data, label);
@@ -98,7 +98,7 @@ void Chunk::Write(const Vector3& center)
 					(*block)->Write(blockCenter);
 
 					(*block)->~Block();
-					gBlockMem.Free(*block);
+					gBlockPool.Free(*block);
 					*block = nullptr;
 				}
 			}
@@ -126,7 +126,7 @@ void Chunk::Read(const Vector3& center)
 		size_t z = indices[2];
 
 		Block** block = &mBlocks[x * size * size + y * size + z];
-		*block = (Block*)gBlockMem.Alloc();
+		*block = (Block*)gBlockPool.Alloc();
 		new (*block) Block();
 
 		Vector3 blockCenter;
@@ -141,4 +141,9 @@ void Chunk::Read(const Vector3& center)
 Block** Chunk::GetBlocks()
 {
 	return mBlocks;
+}
+
+BoundingBox Chunk::GetBoundingBox()
+{
+	return BoundingBox(mCenter, Vector3(HALF_CHUNK_SIZE, HALF_CHUNK_SIZE, HALF_CHUNK_SIZE));
 }

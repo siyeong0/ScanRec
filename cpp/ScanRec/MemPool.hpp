@@ -48,7 +48,7 @@ public:
 			currBucket.Idx++;
 			return retPtr;
 		}
-		// all buckets are full, allocate new bucket
+		// All buckets are full, allocate new bucket
 		Bucket& bucket = allocNewBucket();
 		void* retPtr = bucket.Ptr;
 		bucket.Idx++;
@@ -74,7 +74,7 @@ public:
 				currBucket.Idx--;
 				uint16_t& idxTarget = currBucket.IdxTable[j];
 				uint16_t& idxSource = currBucket.IdxTable[currBucket.Idx];
-				// swap
+				// Swap
 				uint16_t temp = idxTarget;
 				idxTarget = idxSource;
 				idxSource = temp;

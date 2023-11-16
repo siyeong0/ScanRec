@@ -4,13 +4,13 @@
 #include "Common.h"
 #include "MemPool.hpp"
 
-static MemPool<POINTS_PER_FRAG * BYTES_PER_POINT, 65535> gMem;
+static MemPool<POINTS_PER_FRAG * BYTES_PER_POINT, 65535> gPcdPool;
 
 Fragment::Fragment()
 	: mPcd(nullptr)
 {
-	mPcd = gMem.Alloc();
-	// initialize to empty val
+	mPcd = gPcdPool.Alloc();
+	// Initialize to empty val
 	float* fPcd = reinterpret_cast<float*>(mPcd);
 	std::fill(fPcd, fPcd + POINTS_PER_FRAG * 3, PCD_EMPTY_VAL);
 }
@@ -21,14 +21,14 @@ Fragment::~Fragment()
 	{
 		return;
 	}
-	gMem.Free(mPcd);
+	gPcdPool.Free(mPcd);
 }
 
 bool Fragment::AddPoint(PointData& data, uint8_t label)
 {
 	float* fPcd = GetPointPtr(mPcd);
 	uint8_t* uPcd = GetColorPtr(mPcd);
-	// find empty memory
+	// Find empty memory
 	for (int i = 0; i < POINTS_PER_FRAG; i++)
 	{
 		float* pointPtr = &fPcd[i * 3];
@@ -53,7 +53,7 @@ bool Fragment::AddPoint(PointData& data, uint8_t label)
 			}
 		}
 	}
-	//  full
+	// Full
 	return false;
 }
 
@@ -118,11 +118,11 @@ void Fragment::Write(const Vector3& center)
 
 	std::ofstream fout;
 	fout.open(fragPath, std::ios::out | std::ios::binary);
-	// write pcd
+	// Write pcd
 	fout.write(reinterpret_cast<const char*>(mPcd), POINTS_PER_FRAG * BYTES_PER_POINT);
-	gMem.Free(mPcd);
+	gPcdPool.Free(mPcd);
 	mPcd = nullptr;
-	// write label list
+	// Write label list
 	mLabelCountList.Write(fout);
 	mLabelCountList.Free();
 
@@ -136,10 +136,10 @@ void Fragment::Read(const Vector3& center)
 
 	std::ifstream fin;
 	fin.open(fragPath, std::ios::in | std::ios::binary);
-	// read pcd
-	mPcd = gMem.Alloc();
+	// Read pcd
+	mPcd = gPcdPool.Alloc();
 	fin.read(reinterpret_cast<char*>(mPcd), POINTS_PER_FRAG * BYTES_PER_POINT);
-	// read label list
+	// Read label list
 	mLabelCountList.Read(fin);
 
 	fin.close();

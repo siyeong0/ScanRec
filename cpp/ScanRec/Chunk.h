@@ -15,6 +15,7 @@ public:
 	void Read(const Vector3& center);
 
 	Block** GetBlocks();
+	BoundingBox GetBoundingBox();
 private:
 	Block** mBlocks;
 	const Vector3 mCenter;

@@ -1,6 +1,7 @@
 #pragma once
 #include "Chunk.h"
 #include <vector>
+#include "Camera.h"
 
 class ScanRec
 {
@@ -11,7 +12,7 @@ public:
 		Vector2 Center;
 	};
 public:
-	ScanRec(size_t width, size_t height, float depthScale);
+	ScanRec(size_t width, size_t height, float farDepth);
 	~ScanRec();
 
 	void SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic);
@@ -25,7 +26,9 @@ private:
 
 	size_t mWidth;
 	size_t mHeight;
-	float mDepthScale;
+	float mFarDepth;
 
 	Vector2* mUVBuffer;
+
+	Camera mScannerCam;
 };

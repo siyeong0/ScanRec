@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     static_pcd_id = 1023
     pcd_dict = {static_pcd_id: Pcd()}
-    reader = Reader("../resources/2023-11-09-17-09-09", 1014, 1700, 20)
+    reader = Reader("../resources/2023-11-09-17-09-09", 1014, 1700, 1)
 
     done = False
     while True:
@@ -99,7 +99,8 @@ if __name__ == "__main__":
         
         # o3d.visualization.draw_geometries([curr_pcd])
         # o3d.visualization.draw_geometries([mesh])
-        
+    
+    print(len(pcds[0].points))
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
     size=0.6, origin=[0, 0, 0])
     pcds.append(mesh_frame)

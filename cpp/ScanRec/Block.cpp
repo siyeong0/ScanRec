@@ -4,13 +4,13 @@
 #include "Common.h"
 #include "MemPool.hpp"
 
-static MemPool<NUM_FRAGS_IN_BLOCK * sizeof(Fragment*)> gFragPtrArrMem;
-static MemPool<sizeof(Fragment), 65535> gFragMem;
+static MemPool<NUM_FRAGS_IN_BLOCK * sizeof(Fragment*)> gFragPtrArrPool;
+static MemPool<sizeof(Fragment), 65535> gFragPool;
 
 Block::Block()
 	: mFrags(nullptr)
 {
-	mFrags = (Fragment**)gFragPtrArrMem.Alloc();
+	mFrags = (Fragment**)gFragPtrArrPool.Alloc();
 	memset(mFrags, 0, sizeof(Fragment*) * NUM_FRAGS_IN_BLOCK);
 }
 Block::~Block()
@@ -21,10 +21,10 @@ Block::~Block()
 		if (*frag != nullptr)
 		{
 			(*frag)->~Fragment();
-			gFragMem.Free(*frag);
+			gFragPool.Free(*frag);
 		}
 	}
-	gFragPtrArrMem.Free(mFrags);
+	gFragPtrArrPool.Free(mFrags);
 }
 
 void Block::AddPoint(const Vector3& center, PointData& data, uint8_t label)
@@ -45,7 +45,7 @@ void Block::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 	Fragment** frag = &mFrags[idxX * size * size + idxY * size + idxZ];
 	if (*frag == nullptr)
 	{
-		*frag = (Fragment*)gFragMem.Alloc();
+		*frag = (Fragment*)gFragPool.Alloc();
 		new (*frag) Fragment();
 	}
 	(*frag)->AddPoint(data, label);
@@ -81,7 +81,7 @@ void Block::Write(const Vector3& center)
 					(*frag)->Write(fragCenter);
 
 					(*frag)->~Fragment();
-					gFragMem.Free(*frag);
+					gFragPool.Free(*frag);
 					*frag = nullptr;
 				}
 			}
@@ -109,7 +109,7 @@ void Block::Read(const Vector3& center)
 		size_t z = indices[2];
 
 		Fragment** frag = &mFrags[x * size * size + y * size + z];
-		*frag = (Fragment*)gFragMem.Alloc();
+		*frag = (Fragment*)gFragPool.Alloc();
 		new (*frag) Fragment();
 
 		Vector3 fragCenter;

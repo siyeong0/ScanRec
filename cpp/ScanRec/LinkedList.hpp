@@ -126,7 +126,7 @@ public:
 
 	void Write(std::ofstream& fout)
 	{
-		// write label list
+		// Write label list
 		size_t size = Size();
 		fout.write(reinterpret_cast<const char*>(&size), sizeof(size_t));
 		auto currNode = mRoot;

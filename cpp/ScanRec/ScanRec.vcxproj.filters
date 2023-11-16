@@ -13,9 +13,6 @@
     <Filter Include="SpaceDivision\Chunk">
       <UniqueIdentifier>{72105431-6ddd-4d9b-9a08-dd53055c9a3c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SpaceDivision\Block">
-      <UniqueIdentifier>{fd30d9a5-6ee2-4c8f-9e31-515425e5bf71}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SpaceDivision\Fragment">
       <UniqueIdentifier>{6c27313d-286b-4b23-9d97-732ff68536ff}</UniqueIdentifier>
     </Filter>
@@ -37,6 +34,12 @@
     <Filter Include="Generic\Memory\Memory">
       <UniqueIdentifier>{8ccaf6df-c83a-4346-983c-179945f9d5ec}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SpaceDivision\Block">
+      <UniqueIdentifier>{fd30d9a5-6ee2-4c8f-9e31-515425e5bf71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generic\Camera">
+      <UniqueIdentifier>{4c97c7dd-808c-4bb8-af16-a40ee91b6ab0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -54,6 +57,9 @@
     </ClCompile>
     <ClCompile Include="ScanRec.cpp">
       <Filter>ScanRec</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Generic\Camera</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,6 +86,9 @@
     </ClInclude>
     <ClInclude Include="Memory.h">
       <Filter>Generic\Memory\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Generic\Camera</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

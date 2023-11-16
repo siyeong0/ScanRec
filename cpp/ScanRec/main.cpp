@@ -13,6 +13,8 @@ void TestMemPool();
 
 int main(void)
 {
+	auto q = Quaternion::CreateFromYawPitchRoll(0.4f, 1.3f, 0.2f);
+	auto vec = q.ToEuler();
 	TestPcdGeneration();
 	// TestMemPool();
 	return 0;

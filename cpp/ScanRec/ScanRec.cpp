@@ -1,10 +1,10 @@
 #include "ScanRec.h"
 #include "MemPool.hpp"
 
-ScanRec::ScanRec(size_t width, size_t height, float depthScale)
+ScanRec::ScanRec(size_t width, size_t height, float farDepth)
 	: mWidth(width)
 	, mHeight(height)
-	, mDepthScale(depthScale)
+	, mFarDepth(farDepth)
 	, mChunks()
 	, mSize(0)
 	, mUVBuffer(nullptr)
@@ -33,8 +33,20 @@ void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
 
 	float cx = mCamIntrnsic.Center.x;
 	float cy = mCamIntrnsic.Center.y;
-	float invFx = 1.f / mCamIntrnsic.FocalLength.x;
-	float invFy = 1.f / mCamIntrnsic.FocalLength.y;
+	float fx = mCamIntrnsic.FocalLength.x;
+	float fy = mCamIntrnsic.FocalLength.y;
+	float invFx = 1.f / fx;
+	float invFy = 1.f / fy;
+
+	// Create view frustum
+	float aspectRatio = mWidth / mHeight;
+	mScannerCam.SetAspectRatio(aspectRatio);
+	float fovY = 2.f * atanf(mHeight / 2.f / fy); // fovY / 2 == tan(h/2 / fy)
+	float fovYDeg = fovY * 180.f / _PI;	// radian to degree
+	mScannerCam.SetFovY(fovYDeg);
+
+	// Fill UV buffer
+	// world coord x = (w - cx) * depth / focalLength
 	for (size_t h = 0; h < mHeight; h++)
 	{
 		for (size_t w = 0; w < mWidth; w++)
@@ -48,6 +60,25 @@ void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
 
 void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 {
+	// Set scanner position and orientation from camera extrinsic
+	mScannerCam.SetPosition(camExtrinsic.Translation());
+	Matrix orientation = camExtrinsic;
+	memset(&orientation._41, 0, sizeof(float) * 3);	// Set translation factors to 0
+	mScannerCam.SetOrientationFromMatrix(orientation);
+	mScannerCam.Update(0.f);
+
+	// Debug info
+	auto& pos = mScannerCam.GetPosition();
+	std::cout << "Curr Position : " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
+
+	// Chunk managing
+	for (auto& chunk : mChunks)
+	{
+		mScannerCam.IsVisible(chunk->GetBoundingBox());
+	}
+
+	// Generate point cloud data
+	float depthScale = 1.f / ((powf(2.f, 16.f) - 1) / mFarDepth);
 	for (size_t h = 0; h < mHeight; h++)
 	{
 		for (size_t w = 0; w < mWidth; w++)
@@ -59,7 +90,7 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			PointData data;
 			// point
 			Vector4 hgPoint;
-			float z = float(depth[h * mWidth + w]) / 8191.875f;
+			float z = float(depth[h * mWidth + w]) * depthScale;
 			hgPoint.x = mUVBuffer[h * mWidth + w].x * z;
 			hgPoint.y = -mUVBuffer[h * mWidth + w].y * z;
 			hgPoint.z = -z;
