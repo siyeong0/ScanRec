@@ -37,7 +37,7 @@ bool Fragment::AddPoint(PointData& data, uint8_t label)
 		if (pointPtr[0] == PCD_EMPTY_VAL)
 		{
 			memcpy(pointPtr, &data, sizeof(float) * 3);
-			memcpy(colPtr, &(data.R), sizeof(uint8_t) * 3);
+			memcpy(colPtr, &(data.Color), sizeof(uint8_t) * 3);
 			addLabel(label, i);
 
 			return true;
@@ -150,7 +150,12 @@ float* Fragment::GetPointPtr(void* pcdPtr)
 	return reinterpret_cast<float*>(pcdPtr);
 }
 
+int8_t* Fragment::GetNormalPtr(void* pcdPtr)
+{
+	return reinterpret_cast<int8_t*>(pcdPtr) + COLOR_OFFSET_IN_BYTE;
+}
+
 uint8_t* Fragment::GetColorPtr(void* pcdPtr)
 {
-	return reinterpret_cast<uint8_t*>(GetPointPtr(pcdPtr) + COLOR_OFFSET_IN_FLOAT);
+	return reinterpret_cast<uint8_t*>(pcdPtr) + COLOR_OFFSET_IN_BYTE;
 }

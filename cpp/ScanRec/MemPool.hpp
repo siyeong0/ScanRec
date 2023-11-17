@@ -66,19 +66,8 @@ public:
 			if (ptrVal >= currPtrVal && ptrVal < currPtrVal + STRIDE)
 			{
 				uint16_t targetIdx = uint16_t((ptrVal - currPtrVal) / typeSize);
-				size_t j = 0;
-				while (currBucket.IdxTable[j] != targetIdx)
-				{
-					j++;
-				}
 				currBucket.Idx--;
-				uint16_t& idxTarget = currBucket.IdxTable[j];
-				uint16_t& idxSource = currBucket.IdxTable[currBucket.Idx];
-				// Swap
-				uint16_t temp = idxTarget;
-				idxTarget = idxSource;
-				idxSource = temp;
-
+				currBucket.IdxTable[currBucket.Idx] = targetIdx;
 				return;
 			}
 		}
@@ -102,5 +91,4 @@ private:
 	}
 public:
 	std::vector<Bucket> mBuckets;
-
 };

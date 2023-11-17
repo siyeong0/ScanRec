@@ -5,11 +5,15 @@
 #include "Common.h"
 #include "LinkedList.hpp"
 
+static_assert(sizeof(float) == 4);
+static_assert(sizeof(int8_t) == 1);
+
 enum
 {
 	POINTS_PER_FRAG = 24,
-	COLOR_OFFSET_IN_FLOAT = POINTS_PER_FRAG * 3,
-	BYTES_PER_POINT = 15
+	NORMAL_OFFSET_IN_BYTE = POINTS_PER_FRAG * sizeof(float) * 3,
+	COLOR_OFFSET_IN_BYTE = NORMAL_OFFSET_IN_BYTE + POINTS_PER_FRAG * sizeof(int8_t) * 3,
+	BYTES_PER_POINT = 18
 };
 const float PCD_EMPTY_VAL = 9e+20f;
 const float PCD_MIN_DIST = FRAGMENT_SIZE / powf(POINTS_PER_FRAG, 1.f / 3.f);
@@ -36,6 +40,7 @@ public:
 	void Read(const Vector3& center);
 public:
 	static float* GetPointPtr(void* pcdPtr);
+	static int8_t* GetNormalPtr(void* pcdPtr);
 	static uint8_t* GetColorPtr(void* pcdPtr);
 private:
 	void addLabel(uint8_t label, size_t pointIdx);

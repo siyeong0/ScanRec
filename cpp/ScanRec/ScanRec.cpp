@@ -68,8 +68,8 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 	mScannerCam.Update(0.f);
 
 	// Debug info
-	auto& pos = mScannerCam.GetPosition();
-	std::cout << "Curr Position : " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
+	auto& camPos = mScannerCam.GetPosition();
+	std::cout << "Curr Position : " << camPos.x << ", " << camPos.y << ", " << camPos.z << std::endl;
 
 	// Chunk managing
 	for (auto& chunk : mChunks)
@@ -88,6 +88,7 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 				continue;
 			}
 			PointData data;
+			const Vector3& pos = data.Position;
 			// point
 			Vector4 hgPoint;
 			float z = float(depth[h * mWidth + w]) * depthScale;
@@ -98,12 +99,12 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			hgPoint = Vector4::Transform(hgPoint, camExtrinsic);
 			memcpy(&data, &hgPoint, sizeof(float) * 3);
 			// color
-			memcpy(&(data.R), &rgb[h * mWidth + w], sizeof(uint8_t) * 3);
+			memcpy(&(data.Color), &rgb[h * mWidth + w], sizeof(uint8_t) * 3);
 			
 			bool bChunkExist = false;
 			for (auto& chunk : mChunks)
 			{
-				if (chunk->Include(Vector3(data.X, data.Y, data.Z)))
+				if (chunk->Include(Vector3(pos.x, pos.y, pos.z)))
 				{
 					chunk->AddPoint(data, 3);
 					bChunkExist = true;
@@ -113,7 +114,7 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			if (!bChunkExist)
 			{
 				auto getChunkCenter = [](float v) -> float { return roundf(v / CHUNK_SIZE) * HALF_CHUNK_SIZE; };
-				Vector3 chunkCenter(getChunkCenter(data.X), getChunkCenter(data.Y), getChunkCenter(data.Z));
+				Vector3 chunkCenter(getChunkCenter(pos.x), getChunkCenter(pos.y), getChunkCenter(pos.z));
 				Chunk* newChunk = (Chunk*)Alloc(sizeof(Chunk));
 				new (newChunk) Chunk(chunkCenter);
 				newChunk->AddPoint(data, 3);

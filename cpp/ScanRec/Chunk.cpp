@@ -31,9 +31,9 @@ void Chunk::AddPoint(PointData& data, uint8_t label)
 	float cx = mCenter.x;
 	float cy = mCenter.y;
 	float cz = mCenter.z;
-	float x = data.X;
-	float y = data.Y;
-	float z = data.Z;
+	float x = data.Position.x;
+	float y = data.Position.y;
+	float z = data.Position.z;
 	Assert(fabs(cx - x) <= HALF_CHUNK_SIZE + 1e-4f && fabs(cy - y) <= HALF_CHUNK_SIZE + 1e-4f && fabs(cz - z) <= HALF_CHUNK_SIZE + 1e-4f);
 
 	size_t idxX = size_t((x - cx + HALF_CHUNK_SIZE) / BLOCK_SIZE);

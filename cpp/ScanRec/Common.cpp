@@ -22,7 +22,7 @@ void centerFromIdx(Vector3* outCenter, size_t indices[], float numInSide, float 
 
 void idxFromCenter(size_t outIndices[], const Vector3& center, float numInSide, float size)
 {
-	outIndices[0] = center.x / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
-	outIndices[1] = center.y / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
-	outIndices[2] = center.z / size, +numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
+	outIndices[0] = center.x / size + numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
+	outIndices[1] = center.y / size + numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
+	outIndices[2] = center.z / size + numInSide * 0.5f - float(int(numInSide + 1) % 2) * 0.5f;
 }

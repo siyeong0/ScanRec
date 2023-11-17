@@ -36,16 +36,23 @@ struct RGB
 	uint8_t G;
 	uint8_t B;
 };
+static_assert(sizeof(RGB) == 3);
+
+struct Normal
+{
+	int8_t x;
+	int8_t y;
+	int8_t z;
+};
+static_assert(sizeof(Normal) == 3);
 
 struct PointData
 {
-	float X;
-	float Y;
-	float Z;
-	uint8_t R;
-	uint8_t G;
-	uint8_t B;
+	Vector3 Position;
+	Normal Normal;
+	RGB Color;
 };
+static_assert(sizeof(PointData) == 20);
 
 inline void _Assert(bool e)
 {
