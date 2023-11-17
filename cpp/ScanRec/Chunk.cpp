@@ -4,9 +4,8 @@
 static MemPool<NUM_BLOCKS_IN_CHUNK * sizeof(Block*), 2048> gBlockPtrArrPool;
 static MemPool<sizeof(Block), 65535> gBlockPool;
 
-Chunk::Chunk(const Vector3& center)
+Chunk::Chunk()
 	: mBlocks(nullptr)
-	, mCenter(center)
 {
 	mBlocks = (Block**)gBlockPtrArrPool.Alloc();
 	memset(mBlocks, 0, sizeof(Block*) * NUM_BLOCKS_IN_CHUNK);
@@ -26,11 +25,11 @@ Chunk::~Chunk()
 	gBlockPtrArrPool.Free(mBlocks);
 }
 
-void Chunk::AddPoint(PointData& data, uint8_t label)
+void Chunk::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 {
-	float cx = mCenter.x;
-	float cy = mCenter.y;
-	float cz = mCenter.z;
+	float cx = center.x;
+	float cy = center.y;
+	float cz = center.z;
 	float x = data.Position.x;
 	float y = data.Position.y;
 	float z = data.Position.z;
@@ -41,7 +40,7 @@ void Chunk::AddPoint(PointData& data, uint8_t label)
 	size_t idxZ = size_t((z - cz + HALF_CHUNK_SIZE) / BLOCK_SIZE);
 
 	Vector3 blockCenter;
-	memcpy(&blockCenter, &mCenter, sizeof(float) * 3);
+	memcpy(&blockCenter, &center, sizeof(float) * 3);
 	size_t indices[3] = { idxX, idxY, idxZ };
 	centerFromIdx(&blockCenter, indices, NUM_BLOCKS_IN_SIDE, BLOCK_SIZE);
 
@@ -55,18 +54,9 @@ void Chunk::AddPoint(PointData& data, uint8_t label)
 	(*block)->AddPoint(blockCenter, data, label);
 }
 
-const Vector3& Chunk::GetCenter()
+Block** Chunk::GetBlocks()
 {
-	return mCenter;
-}
-
-bool Chunk::Include(const Vector3& point)
-{
-	float dx = fabs(mCenter.x - point.x);
-	float dy = fabs(mCenter.y - point.y);
-	float dz = fabs(mCenter.z - point.z);
-
-	return (dx <= HALF_CHUNK_SIZE && dy <= HALF_CHUNK_SIZE && dz <= HALF_CHUNK_SIZE);
+	return mBlocks;
 }
 
 void Chunk::Write(const Vector3& center)
@@ -138,12 +128,16 @@ void Chunk::Read(const Vector3& center)
 	fin.close();
 }
 
-Block** Chunk::GetBlocks()
+bool Chunk::Include(const Vector3& center, const Vector3& point)
 {
-	return mBlocks;
+	float dx = fabs(center.x - point.x);
+	float dy = fabs(center.y - point.y);
+	float dz = fabs(center.z - point.z);
+
+	return (dx <= HALF_CHUNK_SIZE && dy <= HALF_CHUNK_SIZE && dz <= HALF_CHUNK_SIZE);
 }
 
-BoundingBox Chunk::GetBoundingBox()
+BoundingBox Chunk::GetBoundingBox(const Vector3& center)
 {
-	return BoundingBox(mCenter, Vector3(HALF_CHUNK_SIZE, HALF_CHUNK_SIZE, HALF_CHUNK_SIZE));
+	return BoundingBox(center, Vector3(HALF_CHUNK_SIZE, HALF_CHUNK_SIZE, HALF_CHUNK_SIZE));
 }

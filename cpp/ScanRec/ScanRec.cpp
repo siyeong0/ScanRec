@@ -2,25 +2,30 @@
 #include "MemPool.hpp"
 
 ScanRec::ScanRec(size_t width, size_t height, float farDepth)
-	: mWidth(width)
+	: mStepCount(0)
+	, mWidth(width)
 	, mHeight(height)
 	, mFarDepth(farDepth)
-	, mChunks()
+	, mChunkDatas()
 	, mSize(0)
 	, mUVBuffer(nullptr)
 {
-	Chunk* baseChunk = (Chunk*)Alloc(sizeof(Chunk));
-	new (baseChunk) Chunk(Vector3(0, 0, 0));
-	mChunks.push_back(baseChunk);
+	ChunkData baseChunkData;
+	baseChunkData.Chunk = (Chunk*)Alloc(sizeof(Chunk));
+	new (baseChunkData.Chunk) Chunk();
+	baseChunkData.Center = Vector3(0, 0, 0);
+	baseChunkData.RecentStep = mStepCount;
+	mChunkDatas.push_back(baseChunkData);
 
 	mUVBuffer = (Vector2*)Alloc(sizeof(Vector2) * width * height);
 }
 
 ScanRec::~ScanRec()
 {
-	std::cout << "Number of Chunks : " << mChunks.size() << std::endl;
-	for (auto& ptr : mChunks)
+	std::cout << "Number of Chunks : " << mChunkDatas.size() << std::endl;
+	for (auto& chunkData : mChunkDatas)
 	{
+		Chunk* ptr = chunkData.Chunk;
 		ptr->~Chunk();
 		Free(ptr);
 	}
@@ -60,8 +65,9 @@ void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
 
 void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 {
+	Vector3 currPosition = camExtrinsic.Translation();
 	// Set scanner position and orientation from camera extrinsic
-	mScannerCam.SetPosition(camExtrinsic.Translation());
+	mScannerCam.SetPosition(currPosition);
 	Matrix orientation = camExtrinsic;
 	memset(&orientation._41, 0, sizeof(float) * 3);	// Set translation factors to 0
 	mScannerCam.SetOrientationFromMatrix(orientation);
@@ -72,9 +78,31 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 	std::cout << "Curr Position : " << camPos.x << ", " << camPos.y << ", " << camPos.z << std::endl;
 
 	// Chunk managing
-	for (auto& chunk : mChunks)
+	std::vector<size_t> visibleChunkIdxs;
+	for (size_t i = 0; i < mChunkDatas.size(); i++)
 	{
-		mScannerCam.IsVisible(chunk->GetBoundingBox());
+		ChunkData& chunkData = mChunkDatas[i];
+		Chunk* chunk = chunkData.Chunk;
+		const Vector3& center = chunkData.Center;
+		if (mScannerCam.IsVisible(Chunk::GetBoundingBox(center)))
+		{
+			if (chunk == nullptr)
+			{
+				chunk->Read(center);
+			}
+			chunkData.RecentStep = mStepCount;
+
+			visibleChunkIdxs.push_back(i);
+		}
+
+		size_t stepOffset = mStepCount - chunkData.RecentStep;
+		Vector3 chunkCenter = chunkData.Center;
+		float dist = (currPosition - chunkCenter).Length();
+		if (stepOffset > 32 && dist > mFarDepth * 2.f)
+		{
+			chunk->Write(chunkData.Center);
+			chunkData.Chunk = nullptr;
+		}
 	}
 
 	// Generate point cloud data
@@ -102,11 +130,14 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			memcpy(&(data.Color), &rgb[h * mWidth + w], sizeof(uint8_t) * 3);
 			
 			bool bChunkExist = false;
-			for (auto& chunk : mChunks)
+			for (auto& chunkIdx : visibleChunkIdxs)
 			{
-				if (chunk->Include(Vector3(pos.x, pos.y, pos.z)))
+				ChunkData& chunkData = mChunkDatas[chunkIdx];
+				Chunk* chunk = chunkData.Chunk;
+				const Vector3& center = chunkData.Center;
+				if (Chunk::Include(center, Vector3(pos.x, pos.y, pos.z)))
 				{
-					chunk->AddPoint(data, 3);
+					chunk->AddPoint(center, data, 3);
 					bChunkExist = true;
 					break;
 				}
@@ -115,13 +146,26 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			{
 				auto getChunkCenter = [](float v) -> float { return roundf(v / CHUNK_SIZE) * HALF_CHUNK_SIZE; };
 				Vector3 chunkCenter(getChunkCenter(pos.x), getChunkCenter(pos.y), getChunkCenter(pos.z));
-				Chunk* newChunk = (Chunk*)Alloc(sizeof(Chunk));
-				new (newChunk) Chunk(chunkCenter);
-				newChunk->AddPoint(data, 3);
-				mChunks.push_back(newChunk);
+
+				// Debug
+				for (auto& chunkData : mChunkDatas)
+				{
+					Assert(chunkData.Center != chunkCenter);
+				}
+
+				ChunkData newChunkData;
+				newChunkData.Chunk = (Chunk*)Alloc(sizeof(Chunk));
+				new (newChunkData.Chunk) Chunk();
+				newChunkData.Center = chunkCenter;
+				newChunkData.Chunk->AddPoint(chunkCenter, data, 3);
+				newChunkData.RecentStep = mStepCount;
+				mChunkDatas.push_back(newChunkData);
+
+				visibleChunkIdxs.push_back(mChunkDatas.size() - 1);
 			}
 		}
 	}
+	mStepCount++;
 }
 
 void ScanRec::Save(std::string filename)
@@ -129,8 +173,9 @@ void ScanRec::Save(std::string filename)
 	std::ofstream out;
 	out.open(std::string("../../") + filename, std::ios_base::out);
 
-	for (auto& chunk : mChunks)
+	for (auto& chunkData : mChunkDatas)
 	{
+		Chunk* chunk = chunkData.Chunk;
 		Block** blocks = chunk->GetBlocks();
 		for (size_t bidx = 0; bidx < NUM_BLOCKS_IN_CHUNK; bidx++)
 		{

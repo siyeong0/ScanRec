@@ -137,7 +137,7 @@ void Camera::OnMouseScroll(float yOffset)
 
 void Camera::updateDirections()
 {
-	Vector3 front = Vector3::Transform(Vector3(0, 0, 1), Matrix::CreateFromYawPitchRoll({ mPitch, mYaw, 0 }));
+	Vector3 front = Vector3::Transform(Vector3(0, 0, -1), Matrix::CreateFromYawPitchRoll({ mPitch, mYaw, 0 }));
 	front.Normalize();
 	mFrontDir = front;
 

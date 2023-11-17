@@ -21,8 +21,16 @@ public:
 	void Save(std::string filename);
 private:
 	CameraInstrinsic mCamIntrnsic;
-	std::vector<Chunk*> mChunks;
+	struct ChunkData
+	{
+		Chunk* Chunk;
+		Vector3 Center;
+		size_t RecentStep;
+	};
+	std::vector<ChunkData> mChunkDatas;
 	size_t mSize;
+
+	size_t mStepCount;
 
 	size_t mWidth;
 	size_t mHeight;

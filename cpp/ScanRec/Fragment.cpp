@@ -40,6 +40,11 @@ bool Fragment::AddPoint(PointData& data, uint8_t label)
 			memcpy(colPtr, &(data.Color), sizeof(uint8_t) * 3);
 			addLabel(label, i);
 
+			if (i == POINTS_PER_FRAG - 1)
+			{
+				// Compute normals of points
+			}
+
 			return true;
 		}
 		else
@@ -152,7 +157,7 @@ float* Fragment::GetPointPtr(void* pcdPtr)
 
 int8_t* Fragment::GetNormalPtr(void* pcdPtr)
 {
-	return reinterpret_cast<int8_t*>(pcdPtr) + COLOR_OFFSET_IN_BYTE;
+	return reinterpret_cast<int8_t*>(pcdPtr) + NORMAL_OFFSET_IN_BYTE;
 }
 
 uint8_t* Fragment::GetColorPtr(void* pcdPtr)
