@@ -9,13 +9,13 @@ public:
 
 	void AddPoint(const Vector3& center, PointData& data, uint8_t label);
 
-	Block** GetBlocks();
-
-	void Write(const Vector3& center);
-	void Read(const Vector3& center);
+	Block** GetBlocks() const;
 
 	static bool Include(const Vector3& center, const Vector3& point);
 	static BoundingBox GetBoundingBox(const Vector3& center);
+
+	static std::ofstream& Write(const Chunk* chunk, std::ofstream& out);
+	static std::ifstream& Read(Chunk* chunk, std::ifstream& in);
 private:
 	Block** mBlocks;
 };

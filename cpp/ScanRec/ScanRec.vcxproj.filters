@@ -37,8 +37,8 @@
     <Filter Include="SpaceDivision\Block">
       <UniqueIdentifier>{fd30d9a5-6ee2-4c8f-9e31-515425e5bf71}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Generic\Camera">
-      <UniqueIdentifier>{4c97c7dd-808c-4bb8-af16-a40ee91b6ab0}</UniqueIdentifier>
+    <Filter Include="Generic\ViewFrustum">
+      <UniqueIdentifier>{7857b674-7a68-49c3-9e81-40cfe6508d0e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -58,8 +58,8 @@
     <ClCompile Include="ScanRec.cpp">
       <Filter>ScanRec</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Generic\Camera</Filter>
+    <ClCompile Include="ViweFrustum.cpp">
+      <Filter>Generic\ViewFrustum</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -87,8 +87,8 @@
     <ClInclude Include="Memory.h">
       <Filter>Generic\Memory\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Generic\Camera</Filter>
+    <ClInclude Include="ViewFrustum.h">
+      <Filter>Generic\ViewFrustum</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

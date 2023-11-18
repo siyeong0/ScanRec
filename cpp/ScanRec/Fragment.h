@@ -36,8 +36,6 @@ public:
 	const LinkedList<LabelCount>& GetLabelCountList();
 	void* GetPcd();
 
-	void Write(const Vector3& center);
-	void Read(const Vector3& center);
 public:
 	static float* GetPointPtr(void* pcdPtr);
 	static int8_t* GetNormalPtr(void* pcdPtr);

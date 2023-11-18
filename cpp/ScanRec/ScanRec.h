@@ -1,7 +1,7 @@
 #pragma once
-#include "Chunk.h"
 #include <vector>
-#include "Camera.h"
+#include "Chunk.h"
+#include "ViewFrustum.h"
 
 class ScanRec
 {
@@ -38,5 +38,5 @@ private:
 
 	Vector2* mUVBuffer;
 
-	Camera mScannerCam;
+	ViewFrustum mScannerFrustum;
 };

@@ -22,6 +22,9 @@ Fragment::~Fragment()
 		return;
 	}
 	gPcdPool.Free(mPcd);
+	mPcd = nullptr;
+
+	mLabelCountList.Free();
 }
 
 bool Fragment::AddPoint(PointData& data, uint8_t label)
@@ -114,40 +117,6 @@ void Fragment::addLabel(uint8_t label, size_t pointIdx)
 	lc.Label = label;
 	lc.Count = 1 << pointIdx;
 	mLabelCountList.Append(lc);
-}
-
-void Fragment::Write(const Vector3& center)
-{
-	std::string fragPath = FRAGMENT_CACHE_PATH;
-	fragPath += centerToString(center);
-
-	std::ofstream fout;
-	fout.open(fragPath, std::ios::out | std::ios::binary);
-	// Write pcd
-	fout.write(reinterpret_cast<const char*>(mPcd), POINTS_PER_FRAG * BYTES_PER_POINT);
-	gPcdPool.Free(mPcd);
-	mPcd = nullptr;
-	// Write label list
-	mLabelCountList.Write(fout);
-	mLabelCountList.Free();
-
-	fout.close();
-}
-
-void Fragment::Read(const Vector3& center)
-{
-	std::string fragPath = FRAGMENT_CACHE_PATH;
-	fragPath += centerToString(center);
-
-	std::ifstream fin;
-	fin.open(fragPath, std::ios::in | std::ios::binary);
-	// Read pcd
-	mPcd = gPcdPool.Alloc();
-	fin.read(reinterpret_cast<char*>(mPcd), POINTS_PER_FRAG * BYTES_PER_POINT);
-	// Read label list
-	mLabelCountList.Read(fin);
-
-	fin.close();
 }
 
 float* Fragment::GetPointPtr(void* pcdPtr)

@@ -1,5 +1,7 @@
 #include "ScanRec.h"
 #include "MemPool.hpp"
+#include <opencv2/opencv.hpp>
+#include <io.h>
 
 ScanRec::ScanRec(size_t width, size_t height, float farDepth)
 	: mStepCount(0)
@@ -25,11 +27,16 @@ ScanRec::~ScanRec()
 	std::cout << "Number of Chunks : " << mChunkDatas.size() << std::endl;
 	for (auto& chunkData : mChunkDatas)
 	{
-		Chunk* ptr = chunkData.Chunk;
-		ptr->~Chunk();
-		Free(ptr);
+		if (chunkData.Chunk == nullptr)
+		{
+			continue;
+		}
+		chunkData.Chunk->~Chunk();
+		Free(chunkData.Chunk);
+		chunkData.Chunk = nullptr;
 	}
 	Free(mUVBuffer);
+	mUVBuffer = nullptr;
 }
 
 void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
@@ -44,11 +51,9 @@ void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
 	float invFy = 1.f / fy;
 
 	// Create view frustum
-	float aspectRatio = mWidth / mHeight;
-	mScannerCam.SetAspectRatio(aspectRatio);
+	float aspectRatio = float(mWidth) / mHeight;
 	float fovY = 2.f * atanf(mHeight / 2.f / fy); // fovY / 2 == tan(h/2 / fy)
-	float fovYDeg = fovY * 180.f / _PI;	// radian to degree
-	mScannerCam.SetFovY(fovYDeg);
+	mScannerFrustum.Initialize(fovY, aspectRatio, 0.01f, mFarDepth);
 
 	// Fill UV buffer
 	// world coord x = (w - cx) * depth / focalLength
@@ -66,16 +71,10 @@ void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
 void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 {
 	Vector3 currPosition = camExtrinsic.Translation();
-	// Set scanner position and orientation from camera extrinsic
-	mScannerCam.SetPosition(currPosition);
 	Matrix orientation = camExtrinsic;
 	memset(&orientation._41, 0, sizeof(float) * 3);	// Set translation factors to 0
-	mScannerCam.SetOrientationFromMatrix(orientation);
-	mScannerCam.Update(0.f);
-
-	// Debug info
-	auto& camPos = mScannerCam.GetPosition();
-	std::cout << "Curr Position : " << camPos.x << ", " << camPos.y << ", " << camPos.z << std::endl;
+	// Set scanner position and orientation from camera extrinsic
+	mScannerFrustum.Update(currPosition, orientation);
 
 	// Chunk managing
 	std::vector<size_t> visibleChunkIdxs;
@@ -83,27 +82,64 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 	{
 		ChunkData& chunkData = mChunkDatas[i];
 		Chunk* chunk = chunkData.Chunk;
-		const Vector3& center = chunkData.Center;
-		if (mScannerCam.IsVisible(Chunk::GetBoundingBox(center)))
+		// const Vector3& center = chunkData.Center;
+		Vector3 center = chunkData.Center;
+
+		size_t stepOffset = mStepCount - chunkData.RecentStep;
+		Vector3 chunkCenter = chunkData.Center;
+		float dist = (currPosition - chunkCenter).Length();
+		if (int(stepOffset) > 32 && dist > mFarDepth * 2.0f)
 		{
-			if (chunk == nullptr)
+			if (chunk != nullptr)
 			{
-				chunk->Read(center);
+				// TODO:
+				/*chunk->Write(chunkData.Center);
+				(chunk)->~Chunk();
+				chunkData.Chunk = nullptr;*/
+			}
+		}
+
+		if (mScannerFrustum.Intersects(Chunk::GetBoundingBox(center)))
+		{
+			if (chunkData.Chunk == nullptr)
+			{
+				// TODO
+				//chunkData.Chunk = (Chunk*)Alloc(sizeof(Chunk));
+				//new (chunkData.Chunk) Chunk();
+				//chunkData.Chunk->Read(chunkData.Center);
 			}
 			chunkData.RecentStep = mStepCount;
 
 			visibleChunkIdxs.push_back(i);
 		}
-
-		size_t stepOffset = mStepCount - chunkData.RecentStep;
-		Vector3 chunkCenter = chunkData.Center;
-		float dist = (currPosition - chunkCenter).Length();
-		if (stepOffset > 32 && dist > mFarDepth * 2.f)
-		{
-			chunk->Write(chunkData.Center);
-			chunkData.Chunk = nullptr;
-		}
 	}
+	// Visualize
+	cv::Mat mat(512, 512, CV_8UC3, cv::Scalar(255,255,255));
+	auto cvt = [](float x) -> int { return int((x + CHUNK_SIZE * 2.5) / (CHUNK_SIZE * 5) * 512.f); };
+	cv::circle(mat, cv::Point(cvt(currPosition.z), cvt(currPosition.x)),
+		10, cv::Scalar(255, 0, 0), 5, -1);
+	Vector3 dir = Vector3::Transform(Vector3(0, 0, -1), orientation);
+	Vector2 front(dir.x, dir.z);
+	front.Normalize();
+	cv::line(mat, 
+		cv::Point(cvt(currPosition.z), cvt(currPosition.x)),
+		cv::Point(cvt(currPosition.z + front.y * 5), cvt(currPosition.x + front.x * 5)),
+		cv::Scalar(255,0,0), 2);
+
+	for (size_t i = 0; i < mChunkDatas.size(); i++)
+	{
+		ChunkData& chunkData = mChunkDatas[i];
+		Chunk* chunk = chunkData.Chunk;
+
+		Vector3 c = chunkData.Center;
+		cv::rectangle(mat, 
+			cv::Rect(
+				cv::Point(cvt(c.z - HALF_CHUNK_SIZE), cvt(c.x - HALF_CHUNK_SIZE)),
+				cv::Point(cvt(c.z + HALF_CHUNK_SIZE), cvt(c.x + HALF_CHUNK_SIZE))),
+			chunk != nullptr ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 0), 2, 8);
+	}
+	cv::imshow("x", mat);
+	cv::waitKey(1);
 
 	// Generate point cloud data
 	float depthScale = 1.f / ((powf(2.f, 16.f) - 1) / mFarDepth);
@@ -144,14 +180,16 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			}
 			if (!bChunkExist)
 			{
-				auto getChunkCenter = [](float v) -> float { return roundf(v / CHUNK_SIZE) * HALF_CHUNK_SIZE; };
+				auto getChunkCenter = [](float v) -> float { return roundf(v / CHUNK_SIZE) * CHUNK_SIZE; };
 				Vector3 chunkCenter(getChunkCenter(pos.x), getChunkCenter(pos.y), getChunkCenter(pos.z));
 
 				// Debug
+#ifdef DEBUG
 				for (auto& chunkData : mChunkDatas)
 				{
 					Assert(chunkData.Center != chunkCenter);
 				}
+#endif
 
 				ChunkData newChunkData;
 				newChunkData.Chunk = (Chunk*)Alloc(sizeof(Chunk));
@@ -175,44 +213,10 @@ void ScanRec::Save(std::string filename)
 
 	for (auto& chunkData : mChunkDatas)
 	{
-		Chunk* chunk = chunkData.Chunk;
-		Block** blocks = chunk->GetBlocks();
-		for (size_t bidx = 0; bidx < NUM_BLOCKS_IN_CHUNK; bidx++)
-		{
-			Block* currBlock = blocks[bidx];
-			if (currBlock == nullptr)
-			{
-				continue;
-			}
+		const Chunk* chunk = chunkData.Chunk;
+		const Vector3& center = chunkData.Center;
 
-			Fragment** frags = currBlock->GetFrags();
-			for (size_t fidx = 0; fidx < NUM_FRAGS_IN_BLOCK; fidx++)
-			{
-				Fragment* currFrag = frags[fidx];
-				if (currFrag == nullptr)
-				{
-					continue;
-				}
-
-				void* pcd = currFrag->GetPcd();
-				float* points = Fragment::GetPointPtr(pcd);
-				uint8_t* colors = Fragment::GetColorPtr(pcd);
-				for (size_t i = 0; i < POINTS_PER_FRAG; i++)
-				{
-					if (points[i * 3 + 0] == PCD_EMPTY_VAL)
-					{
-						break;
-					}
-					out << points[i * 3 + 0] << ", "
-						<< points[i * 3 + 1] << ", "
-						<< points[i * 3 + 2] << ", "
-						<< int(colors[i * 3 + 0]) << ", "
-						<< int(colors[i * 3 + 1]) << ", "
-						<< int(colors[i * 3 + 2]) << "\n";
-					out.flush();
-				}
-			}
-		}
+		Chunk::Write(chunk, out);
 	}
 
 	out.close();

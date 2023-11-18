@@ -20,6 +20,7 @@ Chunk::~Chunk()
 		{
 			(*block)->~Block();
 			gBlockPool.Free(*block);
+			*block = nullptr;
 		}
 	}
 	gBlockPtrArrPool.Free(mBlocks);
@@ -54,78 +55,9 @@ void Chunk::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 	(*block)->AddPoint(blockCenter, data, label);
 }
 
-Block** Chunk::GetBlocks()
+Block** Chunk::GetBlocks() const
 {
 	return mBlocks;
-}
-
-void Chunk::Write(const Vector3& center)
-{
-	std::string ChunkPath = CHUNK_CACHE_PATH;
-	ChunkPath += centerToString(center);
-
-	std::ofstream fout;
-	fout.open(ChunkPath, std::ios::out | std::ios::binary);
-	// write fragments
-	size_t size = size_t(NUM_FRAGS_IN_SIDE);
-	for (size_t x = 0; x < size; x++)
-	{
-		for (size_t y = 0; y < size; y++)
-		{
-			for (size_t z = 0; z < size; z++)
-			{
-				Block** block = &mBlocks[x * size * size + y * size + z];
-				if (*block != nullptr)
-				{
-					fout.write(reinterpret_cast<const char*>(&x), sizeof(size_t));
-					fout.write(reinterpret_cast<const char*>(&y), sizeof(size_t));
-					fout.write(reinterpret_cast<const char*>(&z), sizeof(size_t));
-
-					Vector3 blockCenter;
-					memcpy(&blockCenter, &center, sizeof(float) * 3);
-					size_t indices[3] = { x, y, z };
-					centerFromIdx(&blockCenter, indices, NUM_BLOCKS_IN_SIDE, BLOCK_SIZE);
-					(*block)->Write(blockCenter);
-
-					(*block)->~Block();
-					gBlockPool.Free(*block);
-					*block = nullptr;
-				}
-			}
-		}
-	}
-
-	fout.close();
-}
-
-void Chunk::Read(const Vector3& center)
-{
-	std::string ChunkPath = CHUNK_CACHE_PATH;
-	ChunkPath += centerToString(center);
-
-	std::ifstream fin;
-	fin.open(ChunkPath, std::ios::in | std::ios::binary);
-	// read fragments
-	size_t size = size_t(NUM_FRAGS_IN_SIDE);
-	while (!fin.eof())
-	{
-		size_t indices[3];
-		fin.read(reinterpret_cast<char*>(indices), sizeof(size_t) * 3);
-		size_t x = indices[0];
-		size_t y = indices[1];
-		size_t z = indices[2];
-
-		Block** block = &mBlocks[x * size * size + y * size + z];
-		*block = (Block*)gBlockPool.Alloc();
-		new (*block) Block();
-
-		Vector3 blockCenter;
-		memcpy(&blockCenter, &center, sizeof(float) * 3);
-		centerFromIdx(&blockCenter, indices, NUM_BLOCKS_IN_SIDE, BLOCK_SIZE);
-		(*block)->Read(blockCenter);
-	}
-
-	fin.close();
 }
 
 bool Chunk::Include(const Vector3& center, const Vector3& point)
@@ -140,4 +72,56 @@ bool Chunk::Include(const Vector3& center, const Vector3& point)
 BoundingBox Chunk::GetBoundingBox(const Vector3& center)
 {
 	return BoundingBox(center, Vector3(HALF_CHUNK_SIZE, HALF_CHUNK_SIZE, HALF_CHUNK_SIZE));
+}
+
+std::ofstream& Chunk::Write(const Chunk* chunk, std::ofstream& out)
+{
+	for (size_t bIdx = 0; bIdx < NUM_BLOCKS_IN_CHUNK; bIdx++)
+	{
+		Block* currBlock = chunk->GetBlocks()[bIdx];
+		if (currBlock == nullptr)
+		{
+			continue;
+		}
+		for (size_t fIdx = 0; fIdx < NUM_FRAGS_IN_BLOCK; fIdx++)
+		{
+			Fragment* currFrag = currBlock->GetFrags()[fIdx];
+			if (currFrag == nullptr)
+			{
+				continue;
+			}
+			float* points = Fragment::GetPointPtr(currFrag->GetPcd());
+			int8_t* normals = Fragment::GetNormalPtr(currFrag->GetPcd());
+			uint8_t* colors = Fragment::GetColorPtr(currFrag->GetPcd());
+			for (size_t pIdx = 0; pIdx < POINTS_PER_FRAG; pIdx++)
+			{
+				PointData pointData;
+				memcpy(&pointData.Position, &points[pIdx * 3], sizeof(float) * 3);
+				if (pointData.Position.x == PCD_EMPTY_VAL)
+				{
+					break;
+				}
+				memcpy(&pointData.Normal, &normals[pIdx * 3], sizeof(int8_t) * 3);
+				memcpy(&pointData.Color, &colors[pIdx * 3], sizeof(uint8_t) * 3);
+
+				out << pointData.Position.x << ", "
+					<< pointData.Position.y << ", "
+					<< pointData.Position.z << ", "
+					<< pointData.Normal.x / 127.f << ", "
+					<< pointData.Normal.y / 127.f << ", "
+					<< pointData.Normal.z / 127.f << ", "
+					<< (int)pointData.Color.R << ", "
+					<< (int)pointData.Color.G << ", "
+					<< (int)pointData.Color.B << "\n";
+				out.flush();
+				
+			}
+		}
+	}
+	return out;
+}
+
+std::ifstream& Chunk::Read(Chunk* chunk, std::ifstream& in)
+{
+	return in;
 }

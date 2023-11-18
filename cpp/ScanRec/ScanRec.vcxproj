@@ -131,16 +131,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="Fragment.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Block.cpp" />
     <ClCompile Include="ScanRec.cpp" />
+    <ClCompile Include="ViweFrustum.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
     <ClInclude Include="Chunk.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Fragment.h" />
@@ -149,6 +148,7 @@
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MemPool.hpp" />
     <ClInclude Include="ScanRec.h" />
+    <ClInclude Include="ViewFrustum.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

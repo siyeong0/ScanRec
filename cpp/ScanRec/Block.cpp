@@ -22,6 +22,7 @@ Block::~Block()
 		{
 			(*frag)->~Fragment();
 			gFragPool.Free(*frag);
+			*frag = nullptr;
 		}
 	}
 	gFragPtrArrPool.Free(mFrags);
@@ -49,76 +50,6 @@ void Block::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 		new (*frag) Fragment();
 	}
 	(*frag)->AddPoint(data, label);
-}
-
-
-void Block::Write(const Vector3& center)
-{
-	std::string blockPath = BLOCK_CACHE_PATH;
-	blockPath += centerToString(center);
-
-	std::ofstream fout;
-	fout.open(blockPath, std::ios::out | std::ios::binary);
-	// write fragments
-	size_t size = size_t(NUM_FRAGS_IN_SIDE);
-	for (size_t x = 0; x < size; x++)
-	{
-		for (size_t y = 0; y < size; y++)
-		{
-			for (size_t z = 0; z < size; z++)
-			{
-				Fragment** frag = &mFrags[x * size * size + y * size + z];
-				if (*frag != nullptr)
-				{
-					fout.write(reinterpret_cast<const char*>(&x), sizeof(size_t));
-					fout.write(reinterpret_cast<const char*>(&y), sizeof(size_t));
-					fout.write(reinterpret_cast<const char*>(&z), sizeof(size_t));
-
-					Vector3 fragCenter;
-					memcpy(&fragCenter, &center, sizeof(float) * 3);
-					size_t indices[3] = { x, y, z };
-					centerFromIdx(&fragCenter, indices, NUM_FRAGS_IN_SIDE, FRAGMENT_SIZE);
-					(*frag)->Write(fragCenter);
-
-					(*frag)->~Fragment();
-					gFragPool.Free(*frag);
-					*frag = nullptr;
-				}
-			}
-		}
-	}
-
-	fout.close();
-}
-
-void Block::Read(const Vector3& center)
-{
-	std::string blockPath = BLOCK_CACHE_PATH;
-	blockPath += centerToString(center);
-
-	std::ifstream fin;
-	fin.open(blockPath, std::ios::in | std::ios::binary);
-	// read fragments
-	size_t size = size_t(NUM_FRAGS_IN_SIDE);
-	while (!fin.eof())
-	{
-		size_t indices[3];
-		fin.read(reinterpret_cast<char*>(indices), sizeof(size_t) * 3);
-		size_t x = indices[0];
-		size_t y = indices[1];
-		size_t z = indices[2];
-
-		Fragment** frag = &mFrags[x * size * size + y * size + z];
-		*frag = (Fragment*)gFragPool.Alloc();
-		new (*frag) Fragment();
-
-		Vector3 fragCenter;
-		memcpy(&fragCenter, &center, sizeof(float) * 3);
-		centerFromIdx(&fragCenter, indices, NUM_FRAGS_IN_SIDE, FRAGMENT_SIZE);
-		(*frag)->Read(fragCenter);
-	}
-
-	fin.close();
 }
 
 Fragment** Block::GetFrags()

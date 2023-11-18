@@ -5,6 +5,7 @@
 
 using namespace mem;
 
+static size_t ccc = 0;
 template<size_t typeSize, size_t bucketSize=1024>
 class MemPool
 {
@@ -31,10 +32,12 @@ public:
 			mem::Free(bucket.Ptr);
 			mem::Free(bucket.IdxTable);
 		}
+		std::cout << ccc << std::endl;
 	}
 
 	void* Alloc()
-	{
+	{	
+		ccc++;
 		for (int i = (int)mBuckets.size() - 1; i >= 0; i--)
 		{
 			Bucket& currBucket = mBuckets[i];
@@ -57,6 +60,7 @@ public:
 
 	void Free(void* ptr)
 	{
+		ccc--;
 		const size_t STRIDE = typeSize * bucketSize;
 		const size_t ptrVal = reinterpret_cast<size_t>(ptr);
 		for (int i = (int)mBuckets.size() - 1; i >= 0; i--)
