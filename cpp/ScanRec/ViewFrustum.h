@@ -12,7 +12,8 @@ public:
 
 	void Update(const Vector3& position, const Matrix& orientation);
 	void Update(const Vector3& position, const Quaternion& orientation);
-	bool Intersects(const BoundingBox& box);
+	bool Intersects(const BoundingBox& box) const;
+
 private:
 	BoundingFrustum mBaseFrustum;
 	BoundingFrustum mViewFrustum;

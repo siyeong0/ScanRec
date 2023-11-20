@@ -70,7 +70,7 @@ bool Fragment::AddPoint(PointData& data, uint8_t label)
 	return false;
 }
 
-uint8_t Fragment::GetLabel() const
+uint8_t Fragment::GetLabel()
 {
 	uint32_t maxCount = 0;
 	uint8_t maxLabel = 0;

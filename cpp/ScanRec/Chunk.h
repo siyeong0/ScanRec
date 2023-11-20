@@ -11,6 +11,7 @@ public:
 
 	Block** GetBlocks() const;
 
+public:
 	static Vector3 GetCenter(const Vector3& pos);
 	static bool Include(const Vector3& center, const Vector3& point);
 	static BoundingBox GetBoundingBox(const Vector3& center);
