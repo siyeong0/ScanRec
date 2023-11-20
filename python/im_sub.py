@@ -13,8 +13,7 @@ class ImageSubscriber(object):
         # self.image_sub = rospy.Subscriber("/compressed_image", CompressedImage, self.callback)
         # self.pose_sub = rospy.Subscriber("drone")
         # '192.168.1.59'
-        #UDP_IP = '192.168.1.182'
-        UDP_IP = '49.163.146.143'
+        UDP_IP = '192.168.1.182'
         UDP_PORT1 = 9990
         UDP_PORT2 = 9991
         UDP_PORT3 = 9992

@@ -86,16 +86,21 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 		Vector3 center = chunkData.Center;
 
 		size_t stepOffset = mStepCount - chunkData.RecentStep;
-		Vector3 chunkCenter = chunkData.Center;
-		float dist = (currPosition - chunkCenter).Length();
-		if (int(stepOffset) > 32 && dist > mFarDepth * 2.0f)
+		float dist = (Chunk::GetCenter(currPosition) - center).Length();
+		if (int(stepOffset) > 4 && dist > mFarDepth * 2.0f)
 		{
 			if (chunk != nullptr)
 			{
-				// TODO:
-				/*chunk->Write(chunkData.Center);
+				std::ofstream out;
+				std::string path = CHUNK_CACHE_PATH;
+				out.open(path + centerToString(center), std::ios_base::out);
+				Assert(out.is_open());
+
+				Chunk::Write(chunk, out);
 				(chunk)->~Chunk();
-				chunkData.Chunk = nullptr;*/
+				chunkData.Chunk = nullptr;
+
+				out.close();
 			}
 		}
 
@@ -103,10 +108,16 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 		{
 			if (chunkData.Chunk == nullptr)
 			{
-				// TODO
-				//chunkData.Chunk = (Chunk*)Alloc(sizeof(Chunk));
-				//new (chunkData.Chunk) Chunk();
-				//chunkData.Chunk->Read(chunkData.Center);
+				std::ifstream in;
+				std::string path = CHUNK_CACHE_PATH;
+				in.open(path + centerToString(center), std::ios_base::in);
+				Assert(in.is_open());
+
+				chunkData.Chunk = (Chunk*)Alloc(sizeof(Chunk));
+				new (chunkData.Chunk) Chunk();
+				Chunk::Read(chunkData.Chunk, center, in);
+				
+				in.close();
 			}
 			chunkData.RecentStep = mStepCount;
 
@@ -116,14 +127,14 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 	// Visualize
 	cv::Mat mat(512, 512, CV_8UC3, cv::Scalar(255,255,255));
 	auto cvt = [](float x) -> int { return int((x + CHUNK_SIZE * 2.5) / (CHUNK_SIZE * 5) * 512.f); };
-	cv::circle(mat, cv::Point(cvt(currPosition.z), cvt(currPosition.x)),
+	cv::circle(mat, cv::Point(cvt(currPosition.x), cvt(currPosition.z)),
 		10, cv::Scalar(255, 0, 0), 5, -1);
 	Vector3 dir = Vector3::Transform(Vector3(0, 0, -1), orientation);
 	Vector2 front(dir.x, dir.z);
 	front.Normalize();
 	cv::line(mat, 
-		cv::Point(cvt(currPosition.z), cvt(currPosition.x)),
-		cv::Point(cvt(currPosition.z + front.y * 5), cvt(currPosition.x + front.x * 5)),
+		cv::Point(cvt(currPosition.x), cvt(currPosition.z)),
+		cv::Point(cvt(currPosition.x + front.x * 5), cvt(currPosition.z + front.y * 5)),
 		cv::Scalar(255,0,0), 2);
 
 	for (size_t i = 0; i < mChunkDatas.size(); i++)
@@ -134,8 +145,8 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 		Vector3 c = chunkData.Center;
 		cv::rectangle(mat, 
 			cv::Rect(
-				cv::Point(cvt(c.z - HALF_CHUNK_SIZE), cvt(c.x - HALF_CHUNK_SIZE)),
-				cv::Point(cvt(c.z + HALF_CHUNK_SIZE), cvt(c.x + HALF_CHUNK_SIZE))),
+				cv::Point(cvt(c.x - HALF_CHUNK_SIZE), cvt(c.z - HALF_CHUNK_SIZE)),
+				cv::Point(cvt(c.x + HALF_CHUNK_SIZE), cvt(c.z + HALF_CHUNK_SIZE))),
 			chunk != nullptr ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 0), 2, 8);
 	}
 	cv::imshow("x", mat);
@@ -180,8 +191,7 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			}
 			if (!bChunkExist)
 			{
-				auto getChunkCenter = [](float v) -> float { return roundf(v / CHUNK_SIZE) * CHUNK_SIZE; };
-				Vector3 chunkCenter(getChunkCenter(pos.x), getChunkCenter(pos.y), getChunkCenter(pos.z));
+				Vector3 chunkCenter = Chunk::GetCenter(pos);
 
 				// Debug
 #ifdef DEBUG
@@ -210,14 +220,34 @@ void ScanRec::Save(std::string filename)
 {
 	std::ofstream out;
 	out.open(std::string("../../") + filename, std::ios_base::out);
+	Assert(out.is_open());
 
 	for (auto& chunkData : mChunkDatas)
 	{
+		if (chunkData.Chunk == nullptr)
+		{
+			std::ifstream in;
+			std::string path = CHUNK_CACHE_PATH;
+			in.open(path + centerToString(chunkData.Center), std::ios_base::in);
+			Assert(in.is_open());
+
+			chunkData.Chunk = (Chunk*)Alloc(sizeof(Chunk));
+			new (chunkData.Chunk) Chunk();
+			Chunk::Read(chunkData.Chunk, chunkData.Center, in);
+
+			in.close();
+		}
 		const Chunk* chunk = chunkData.Chunk;
 		const Vector3& center = chunkData.Center;
-
 		Chunk::Write(chunk, out);
 	}
 
 	out.close();
+}
+
+void ScanRec::Load(std::string filename)
+{
+	std::ifstream in;
+	in.open(std::string("../../") + filename, std::ios_base::out);
+	Assert(in.is_open());
 }

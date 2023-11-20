@@ -1,5 +1,6 @@
 #include "Chunk.h"
 #include "MemPool.hpp"
+#include <sstream>
 
 static MemPool<NUM_BLOCKS_IN_CHUNK * sizeof(Block*), 2048> gBlockPtrArrPool;
 static MemPool<sizeof(Block), 65535> gBlockPool;
@@ -104,6 +105,7 @@ std::ofstream& Chunk::Write(const Chunk* chunk, std::ofstream& out)
 				memcpy(&pointData.Normal, &normals[pIdx * 3], sizeof(int8_t) * 3);
 				memcpy(&pointData.Color, &colors[pIdx * 3], sizeof(uint8_t) * 3);
 
+				out.precision(4);
 				out << pointData.Position.x << ", "
 					<< pointData.Position.y << ", "
 					<< pointData.Position.z << ", "
@@ -113,6 +115,7 @@ std::ofstream& Chunk::Write(const Chunk* chunk, std::ofstream& out)
 					<< (int)pointData.Color.R << ", "
 					<< (int)pointData.Color.G << ", "
 					<< (int)pointData.Color.B << "\n";
+
 				out.flush();
 				
 			}
@@ -121,7 +124,38 @@ std::ofstream& Chunk::Write(const Chunk* chunk, std::ofstream& out)
 	return out;
 }
 
-std::ifstream& Chunk::Read(Chunk* chunk, std::ifstream& in)
+std::ifstream& Chunk::Read(Chunk* chunk, const Vector3 center, std::ifstream& in)
 {
+	PointData pointData;
+	std::string lineBuf;
+	auto getFloat = [](std::stringstream& ss) -> float
+	{
+		std::string strBuf;
+		std::getline(ss, strBuf, ',');
+		return std::stof(strBuf);
+	};
+
+	while (std::getline(in, lineBuf))
+	{
+		std::stringstream ss(lineBuf);
+		pointData.Position.x = getFloat(ss);
+		pointData.Position.y = getFloat(ss);
+		pointData.Position.z = getFloat(ss);
+		pointData.Normal.x = int8_t(getFloat(ss) * 127.f);
+		pointData.Normal.y = int8_t(getFloat(ss) * 127.f);
+		pointData.Normal.z = int8_t(getFloat(ss) * 127.f);
+		pointData.Color.R = uint8_t(getFloat(ss));
+		pointData.Color.G = uint8_t(getFloat(ss));
+		pointData.Color.B = uint8_t(getFloat(ss));
+		chunk->AddPoint(center, pointData, 3);
+	}
+
 	return in;
+}
+
+Vector3 Chunk::GetCenter(const Vector3& pos)
+{
+	return Vector3(roundf(pos.x / CHUNK_SIZE) * CHUNK_SIZE,
+		roundf(pos.y / CHUNK_SIZE) * CHUNK_SIZE,
+		roundf(pos.z / CHUNK_SIZE) * CHUNK_SIZE);
 }

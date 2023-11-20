@@ -1,4 +1,5 @@
 #include "ViewFrustum.h"
+#include <DirectXMath.h>
 
 ViewFrustum::ViewFrustum()
 {
@@ -17,7 +18,11 @@ ViewFrustum::~ViewFrustum()
 
 void ViewFrustum::Initialize(float fovAngleY, float aspectRatio, float nearZ, float farZ)
 {
-	BoundingFrustum::CreateFromMatrix(mBaseFrustum, DirectX::XMMatrixPerspectiveFovRH(fovAngleY, aspectRatio, nearZ, farZ), true);
+	// BoundingFrustum::CreateFromMatrix(mBaseFrustum, DirectX::XMMatrixPerspectiveFovRH(fovAngleY, aspectRatio, nearZ, farZ), true);
+	BoundingFrustum::CreateFromMatrix(mBaseFrustum, DirectX::XMMatrixPerspectiveFovRH(fovAngleY, aspectRatio, nearZ, farZ));
+	auto temp = mBaseFrustum.Near;
+	mBaseFrustum.Near = mBaseFrustum.Far;
+	mBaseFrustum.Far = temp;
 }
 
 void ViewFrustum::Update(const Vector3& position, const Matrix& orientation)

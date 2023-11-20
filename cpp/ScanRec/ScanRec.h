@@ -19,6 +19,7 @@ public:
 	void Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth);
 
 	void Save(std::string filename);
+	void Load(std::string filename);
 private:
 	CameraInstrinsic mCamIntrnsic;
 	struct ChunkData

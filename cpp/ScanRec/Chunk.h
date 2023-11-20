@@ -15,7 +15,9 @@ public:
 	static BoundingBox GetBoundingBox(const Vector3& center);
 
 	static std::ofstream& Write(const Chunk* chunk, std::ofstream& out);
-	static std::ifstream& Read(Chunk* chunk, std::ifstream& in);
+	static std::ifstream& Read(Chunk* chunk, const Vector3 center, std::ifstream& in);
+
+	static Vector3 GetCenter(const Vector3& pos);
 private:
 	Block** mBlocks;
 };

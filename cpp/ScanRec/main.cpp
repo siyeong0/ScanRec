@@ -20,11 +20,11 @@ int main(void)
 
 void TestPcdGeneration()
 {
-	std::string basePath = "../../resources/2023-11-09-17-09-09/";
+	std::string basePath = "../../resources/2023-11-20-12-09-41/";
 	ScanRec scanRec(256, 144, 8);
 	Matrix prevExtrinsic;
 	size_t count = 0;
-	for (int i = 1000; i < 1700; i += 1)
+	for (int i = 0; i < 1000; i += 1)
 	{
 		std::string imagePath = basePath + "image/" + std::to_string(i) + ".jpg";
 		std::string depthPath = basePath + "depth/" + std::to_string(i) + ".png";
@@ -35,8 +35,8 @@ void TestPcdGeneration()
 		}
 		// read rgb
 		cv::Mat img = cv::imread(imagePath);
-		//cv::imshow("test", img);
-		//cv::waitKey(1);
+		cv::imshow("test", img);
+		cv::waitKey(1);
 		cv::Mat rgb;
 		cv::resize(img, rgb, cv::Size(256, 144));
 		uchar* rawRgb = rgb.ptr();

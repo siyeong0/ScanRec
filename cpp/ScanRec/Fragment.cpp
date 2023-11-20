@@ -57,6 +57,11 @@ bool Fragment::AddPoint(PointData& data, uint8_t label)
 			float dist = (currPoint - inputPoint).Length();
 			if (dist < PCD_MIN_DIST)
 			{
+				// Blend colors
+				colPtr[0] = uint8_t(colPtr[0] * 0.7f + data.Color.R * 0.3f);
+				colPtr[1] = uint8_t(colPtr[1] * 0.7f + data.Color.G * 0.3f);
+				colPtr[2] = uint8_t(colPtr[2] * 0.7f + data.Color.B * 0.3f);
+
 				return false;
 			}
 		}
