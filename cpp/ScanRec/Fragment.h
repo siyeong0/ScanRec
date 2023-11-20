@@ -32,9 +32,9 @@ public:
 
 	bool AddPoint(PointData& data, uint8_t label);
 
-	uint8_t GetLabel();
-	const LinkedList<LabelCount>& GetLabelCountList();
-	void* GetPcd();
+	uint8_t GetLabel() const;
+	const LinkedList<LabelCount>& GetLabelCountList() const;
+	void* GetPcd() const;
 
 public:
 	static float* GetPointPtr(void* pcdPtr);

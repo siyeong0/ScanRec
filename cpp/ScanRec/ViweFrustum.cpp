@@ -39,7 +39,7 @@ void ViewFrustum::Update(const Vector3& position, const Quaternion& orientation)
 	mViewFrustum.Orientation = orientation;
 }
 
-bool ViewFrustum::Intersects(const BoundingBox& box)
+bool ViewFrustum::Intersects(const BoundingBox& box) const
 {
 	return mViewFrustum.Intersects(box);
 }

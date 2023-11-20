@@ -81,7 +81,7 @@ void TestPcdGeneration()
 
 		float transDist = (currTranslation - prevTranslation).Length();
 		float rotDist = (currRotMat * prevRotMat.Transpose()).ToEuler().Length();
-		if (transDist + rotDist < 0.6)
+		if (transDist + rotDist < 0.6f)
 		{
 			continue;
 		}

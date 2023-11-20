@@ -61,6 +61,13 @@ Block** Chunk::GetBlocks() const
 	return mBlocks;
 }
 
+Vector3 Chunk::GetCenter(const Vector3& pos)
+{
+	return Vector3(roundf(pos.x / CHUNK_SIZE) * CHUNK_SIZE,
+		roundf(pos.y / CHUNK_SIZE) * CHUNK_SIZE,
+		roundf(pos.z / CHUNK_SIZE) * CHUNK_SIZE);
+}
+
 bool Chunk::Include(const Vector3& center, const Vector3& point)
 {
 	float dx = fabs(center.x - point.x);
@@ -151,11 +158,4 @@ std::ifstream& Chunk::Read(Chunk* chunk, const Vector3 center, std::ifstream& in
 	}
 
 	return in;
-}
-
-Vector3 Chunk::GetCenter(const Vector3& pos)
-{
-	return Vector3(roundf(pos.x / CHUNK_SIZE) * CHUNK_SIZE,
-		roundf(pos.y / CHUNK_SIZE) * CHUNK_SIZE,
-		roundf(pos.z / CHUNK_SIZE) * CHUNK_SIZE);
 }

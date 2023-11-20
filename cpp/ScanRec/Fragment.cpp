@@ -70,7 +70,7 @@ bool Fragment::AddPoint(PointData& data, uint8_t label)
 	return false;
 }
 
-uint8_t Fragment::GetLabel()
+uint8_t Fragment::GetLabel() const
 {
 	uint32_t maxCount = 0;
 	uint8_t maxLabel = 0;
@@ -96,12 +96,12 @@ uint8_t Fragment::GetLabel()
 	return maxLabel;
 }
 
-const LinkedList<Fragment::LabelCount>& Fragment::GetLabelCountList()
+const LinkedList<Fragment::LabelCount>& Fragment::GetLabelCountList() const
 {
 	return mLabelCountList;
 }
 
-void* Fragment::GetPcd()
+void* Fragment::GetPcd() const
 {
 	return mPcd;
 }
