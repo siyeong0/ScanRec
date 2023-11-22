@@ -16,7 +16,7 @@ public:
 	~ScanRec();
 
 	void SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic);
-	void Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth);
+	const std::vector<RosPointData>& Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth);
 
 	void Save(std::string filename);
 	void Load(std::string filename);
@@ -40,4 +40,6 @@ private:
 	Vector2* mUVBuffer;
 
 	ViewFrustum mScannerFrustum;
+
+	std::vector<RosPointData> mRosPcdBuf;
 };

@@ -54,6 +54,18 @@ struct PointData
 };
 static_assert(sizeof(PointData) == 20);
 
+struct RosPointData
+{
+	float x;
+	float y;
+	float z;
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+	uint8_t dummy;
+};
+static_assert(sizeof(RosPointData) == 16);
+
 inline void _Assert(bool e)
 {
 	if (!e)

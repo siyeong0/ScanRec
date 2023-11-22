@@ -20,11 +20,15 @@ int main(void)
 
 void TestPcdGeneration()
 {
-	std::string basePath = "../../resources/2023-11-20-12-09-41/";
+	std::string basePath = "../../resources/2023-11-09-17-09-09/";
 	ScanRec scanRec(256, 144, 8);
 	Matrix prevExtrinsic;
 	size_t count = 0;
-	for (int i = 0; i < 1000; i += 1)
+
+	cv::VideoWriter videoWriter;
+	videoWriter.open("ac.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 2, cv::Size(1280, 720), true);
+
+	for (int i = 1000; i < 1700; i += 1)
 	{
 		std::string imagePath = basePath + "image/" + std::to_string(i) + ".jpg";
 		std::string depthPath = basePath + "depth/" + std::to_string(i) + ".png";
@@ -85,6 +89,7 @@ void TestPcdGeneration()
 		{
 			continue;
 		}
+		videoWriter << img;
 		//std::cout << "=======================" << std::endl;
 		//std::cout << count << " : frame number" << i << std::endl;
 		//std::cout << "T : " << transDist << std::endl;

@@ -20,6 +20,8 @@ ScanRec::ScanRec(size_t width, size_t height, float farDepth)
 	mChunkDatas.push_back(baseChunkData);
 
 	mUVBuffer = (Vector2*)Alloc(sizeof(Vector2) * width * height);
+	
+	mRosPcdBuf.reserve(mWidth * mHeight);
 }
 
 ScanRec::~ScanRec()
@@ -68,8 +70,11 @@ void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
 	}
 }
 
-void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
+const std::vector<RosPointData>& ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 {
+	mRosPcdBuf.clear();
+	Assert(mRosPcdBuf.size() == 0);
+
 	Vector3 currPosition = camExtrinsic.Translation();
 	Matrix orientation = camExtrinsic;
 	memset(&orientation._41, 0, sizeof(float) * 3);	// Set translation factors to 0
@@ -124,33 +129,6 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			visibleChunkIdxs.push_back(i);
 		}
 	}
-	// Visualize
-	cv::Mat mat(512, 512, CV_8UC3, cv::Scalar(255,255,255));
-	auto cvt = [](float x) -> int { return int((x + CHUNK_SIZE * 2.5) / (CHUNK_SIZE * 5) * 512.f); };
-	cv::circle(mat, cv::Point(cvt(currPosition.x), cvt(currPosition.z)),
-		10, cv::Scalar(255, 0, 0), 5, -1);
-	Vector3 dir = Vector3::Transform(Vector3(0, 0, -1), orientation);
-	Vector2 front(dir.x, dir.z);
-	front.Normalize();
-	cv::line(mat, 
-		cv::Point(cvt(currPosition.x), cvt(currPosition.z)),
-		cv::Point(cvt(currPosition.x + front.x * 5), cvt(currPosition.z + front.y * 5)),
-		cv::Scalar(255,0,0), 2);
-
-	for (size_t i = 0; i < mChunkDatas.size(); i++)
-	{
-		ChunkData& chunkData = mChunkDatas[i];
-		Chunk* chunk = chunkData.Chunk;
-
-		Vector3 c = chunkData.Center;
-		cv::rectangle(mat, 
-			cv::Rect(
-				cv::Point(cvt(c.x - HALF_CHUNK_SIZE), cvt(c.z - HALF_CHUNK_SIZE)),
-				cv::Point(cvt(c.x + HALF_CHUNK_SIZE), cvt(c.z + HALF_CHUNK_SIZE))),
-			chunk != nullptr ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 0), 2, 8);
-	}
-	cv::imshow("x", mat);
-	cv::waitKey(1);
 
 	// Generate point cloud data
 	float depthScale = 1.f / ((powf(2.f, 16.f) - 1) / mFarDepth);
@@ -163,6 +141,7 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 				continue;
 			}
 			PointData data;
+			RosPointData rosData;
 			const Vector3& pos = data.Position;
 			// point
 			Vector4 hgPoint;
@@ -173,9 +152,15 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 			hgPoint.w = 1.f;
 			hgPoint = Vector4::Transform(hgPoint, camExtrinsic);
 			memcpy(&data, &hgPoint, sizeof(float) * 3);
+			memcpy(&rosData, &hgPoint, sizeof(float) * 3);
 			// color
 			memcpy(&(data.Color), &rgb[h * mWidth + w], sizeof(uint8_t) * 3);
+			memcpy(&(rosData.r), &rgb[h * mWidth + w], sizeof(uint8_t) * 3);
 			
+			// output ros point cloud data
+			mRosPcdBuf.push_back(rosData);
+
+			// add point to local memory
 			bool bChunkExist = false;
 			for (auto& chunkIdx : visibleChunkIdxs)
 			{
@@ -214,6 +199,8 @@ void ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, uint16_t* depth)
 		}
 	}
 	mStepCount++;
+
+	return mRosPcdBuf;
 }
 
 void ScanRec::Save(std::string filename)
