@@ -1,12 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="MainEntry">
-      <UniqueIdentifier>{7c313cbd-d183-43e1-81d6-22e41330b4d7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MainEntry\pch">
-      <UniqueIdentifier>{15c21d63-6e21-4430-8ac5-9896c006a7ac}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MathLib">
       <UniqueIdentifier>{3f7306c6-8b94-4dc3-a9ba-9207cf4b71e0}</UniqueIdentifier>
     </Filter>
@@ -22,17 +16,8 @@
     <Filter Include="Collision">
       <UniqueIdentifier>{1c356822-5e85-4a7a-a9db-21aa0cf136a7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Plane">
-      <UniqueIdentifier>{9fb95138-2c90-43ce-a451-84017822f7d8}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>MainEntry\pch</Filter>
-    </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>MainEntry\pch</Filter>
-    </ClInclude>
     <ClInclude Include="MathLib.h">
       <Filter>MathLib</Filter>
     </ClInclude>
@@ -45,40 +30,8 @@
     <ClInclude Include="Matrix.h">
       <Filter>Matrix</Filter>
     </ClInclude>
-    <ClInclude Include="dllAPI.h">
-      <Filter>MainEntry</Filter>
-    </ClInclude>
     <ClInclude Include="Collision.h">
       <Filter>Collision</Filter>
     </ClInclude>
-    <ClInclude Include="Plane.h">
-      <Filter>Plane</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <Filter>MainEntry\pch</Filter>
-    </ClCompile>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>MainEntry</Filter>
-    </ClCompile>
-    <ClCompile Include="MathLib.cpp">
-      <Filter>MathLib</Filter>
-    </ClCompile>
-    <ClCompile Include="Vector.cpp">
-      <Filter>Vector</Filter>
-    </ClCompile>
-    <ClCompile Include="Quaternion.cpp">
-      <Filter>Quaternion</Filter>
-    </ClCompile>
-    <ClCompile Include="Matrix.cpp">
-      <Filter>Matrix</Filter>
-    </ClCompile>
-    <ClCompile Include="Collision.cpp">
-      <Filter>Collision</Filter>
-    </ClCompile>
-    <ClCompile Include="Plane.cpp">
-      <Filter>Plane</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

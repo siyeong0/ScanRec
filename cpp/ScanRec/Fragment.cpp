@@ -54,7 +54,7 @@ bool Fragment::AddPoint(PointData& data, uint8_t label)
 		{
 			Vector3 currPoint(pointPtr);
 			Vector3 inputPoint(reinterpret_cast<float*>(&data));
-			float dist = (currPoint - inputPoint).Length();
+			float dist = (currPoint - inputPoint).norm();
 			if (dist < PCD_MIN_DIST)
 			{
 				// Blend colors

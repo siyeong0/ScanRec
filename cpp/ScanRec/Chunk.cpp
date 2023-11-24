@@ -29,12 +29,12 @@ Chunk::~Chunk()
 
 void Chunk::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 {
-	float cx = center.x;
-	float cy = center.y;
-	float cz = center.z;
-	float x = data.Position.x;
-	float y = data.Position.y;
-	float z = data.Position.z;
+	float cx = center[0];
+	float cy = center[1];
+	float cz = center[2];
+	float x = data.Position[0];
+	float y = data.Position[1];
+	float z = data.Position[2];
 	Assert(fabs(cx - x) <= HALF_CHUNK_SIZE + 1e-4f && fabs(cy - y) <= HALF_CHUNK_SIZE + 1e-4f && fabs(cz - z) <= HALF_CHUNK_SIZE + 1e-4f);
 
 	size_t idxX = size_t((x - cx + HALF_CHUNK_SIZE) / BLOCK_SIZE);
@@ -63,16 +63,16 @@ Block** Chunk::GetBlocks() const
 
 Vector3 Chunk::GetCenter(const Vector3& pos)
 {
-	return Vector3(roundf(pos.x / CHUNK_SIZE) * CHUNK_SIZE,
-		roundf(pos.y / CHUNK_SIZE) * CHUNK_SIZE,
-		roundf(pos.z / CHUNK_SIZE) * CHUNK_SIZE);
+	return Vector3(roundf(pos[0] / CHUNK_SIZE) * CHUNK_SIZE,
+		roundf(pos[1] / CHUNK_SIZE) * CHUNK_SIZE,
+		roundf(pos[2] / CHUNK_SIZE) * CHUNK_SIZE);
 }
 
 bool Chunk::Include(const Vector3& center, const Vector3& point)
 {
-	float dx = fabs(center.x - point.x);
-	float dy = fabs(center.y - point.y);
-	float dz = fabs(center.z - point.z);
+	float dx = fabs(center[0] - point[0]);
+	float dy = fabs(center[1] - point[1]);
+	float dz = fabs(center[2] - point[2]);
 
 	return (dx <= HALF_CHUNK_SIZE && dy <= HALF_CHUNK_SIZE && dz <= HALF_CHUNK_SIZE);
 }
@@ -105,7 +105,7 @@ std::ofstream& Chunk::Write(const Chunk* chunk, std::ofstream& out)
 			{
 				PointData pointData;
 				memcpy(&pointData.Position, &points[pIdx * 3], sizeof(float) * 3);
-				if (pointData.Position.x == PCD_EMPTY_VAL)
+				if (pointData.Position[0] == PCD_EMPTY_VAL)
 				{
 					break;
 				}
@@ -113,9 +113,9 @@ std::ofstream& Chunk::Write(const Chunk* chunk, std::ofstream& out)
 				memcpy(&pointData.Color, &colors[pIdx * 3], sizeof(uint8_t) * 3);
 
 				out.precision(4);
-				out << pointData.Position.x << ", "
-					<< pointData.Position.y << ", "
-					<< pointData.Position.z << ", "
+				out << pointData.Position[0] << ", "
+					<< pointData.Position[1] << ", "
+					<< pointData.Position[2] << ", "
 					<< pointData.Normal.x / 127.f << ", "
 					<< pointData.Normal.y / 127.f << ", "
 					<< pointData.Normal.z / 127.f << ", "
@@ -145,9 +145,9 @@ std::ifstream& Chunk::Read(Chunk* chunk, const Vector3 center, std::ifstream& in
 	while (std::getline(in, lineBuf))
 	{
 		std::stringstream ss(lineBuf);
-		pointData.Position.x = getFloat(ss);
-		pointData.Position.y = getFloat(ss);
-		pointData.Position.z = getFloat(ss);
+		pointData.Position[0] = getFloat(ss);
+		pointData.Position[1] = getFloat(ss);
+		pointData.Position[2] = getFloat(ss);
 		pointData.Normal.x = int8_t(getFloat(ss) * 127.f);
 		pointData.Normal.y = int8_t(getFloat(ss) * 127.f);
 		pointData.Normal.z = int8_t(getFloat(ss) * 127.f);

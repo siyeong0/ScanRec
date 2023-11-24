@@ -30,12 +30,12 @@ Block::~Block()
 
 void Block::AddPoint(const Vector3& center, PointData& data, uint8_t label)
 {
-	float cx = center.x;
-	float cy = center.y;
-	float cz = center.z;
-	float x = data.Position.x;
-	float y = data.Position.y;
-	float z = data.Position.z;
+	float cx = center[0];
+	float cy = center[1];
+	float cz = center[2];
+	float x = data.Position[0];
+	float y = data.Position[1];
+	float z = data.Position[2];
 	Assert(fabs(cx - x) <= HALF_BLOCK_SIZE + 1e-4f && fabs(cy - y) <= HALF_BLOCK_SIZE + 1e-4f && fabs(cz - z) <= HALF_BLOCK_SIZE + 1e-4f);
 
 	size_t idxX = size_t((x - cx + HALF_BLOCK_SIZE) / FRAGMENT_SIZE);

@@ -11,7 +11,6 @@ public:
 	void Initialize(float fovAngleY, float aspectRatio, float nearZ, float farZ);
 
 	void Update(const Vector3& position, const Matrix& orientation);
-	void Update(const Vector3& position, const Quaternion& orientation);
 	bool Intersects(const BoundingBox& box) const;
 
 private:

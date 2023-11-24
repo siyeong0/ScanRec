@@ -45,10 +45,10 @@ void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
 {
 	mCamIntrnsic = camIntrinsic;
 
-	float cx = mCamIntrnsic.Center.x;
-	float cy = mCamIntrnsic.Center.y;
-	float fx = mCamIntrnsic.FocalLength.x;
-	float fy = mCamIntrnsic.FocalLength.y;
+	float cx = mCamIntrnsic.Center[0];
+	float cy = mCamIntrnsic.Center[1];
+	float fx = mCamIntrnsic.FocalLength[0];
+	float fy = mCamIntrnsic.FocalLength[1];
 	float invFx = 1.f / fx;
 	float invFy = 1.f / fy;
 
@@ -64,8 +64,8 @@ void ScanRec::SetCameraIntrinsics(const CameraInstrinsic& camIntrinsic)
 		for (size_t w = 0; w < mWidth; w++)
 		{
 			Vector2& uv = mUVBuffer[h * mWidth + w];
-			uv.x = (w - cx) * invFx;
-			uv.y = (h - cy) * invFy;
+			uv[0] = (w - cx) * invFx;
+			uv[1] = (h - cy) * invFy;
 		}
 	}
 }
@@ -75,9 +75,11 @@ const std::vector<RosPointData>& ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, u
 	mRosPcdBuf.clear();
 	Assert(mRosPcdBuf.size() == 0);
 
-	Vector3 currPosition = camExtrinsic.Translation();
+	Vector3 currPosition(camExtrinsic.coeff(0, 3), camExtrinsic.coeff(1, 3), camExtrinsic.coeff(2, 3));
 	Matrix orientation = camExtrinsic;
-	memset(&orientation._41, 0, sizeof(float) * 3);	// Set translation factors to 0
+	orientation.coeffRef(0, 3) = 0;	// Set translation factors to 0
+	orientation.coeffRef(1, 3) = 0;
+	orientation.coeffRef(2, 3) = 0;
 	// Set scanner position and orientation from camera extrinsic
 	mScannerFrustum.Update(currPosition, orientation);
 
@@ -91,7 +93,7 @@ const std::vector<RosPointData>& ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, u
 		Vector3 center = chunkData.Center;
 
 		size_t stepOffset = mStepCount - chunkData.RecentStep;
-		float dist = (Chunk::GetCenter(currPosition) - center).Length();
+		float dist = (Chunk::GetCenter(currPosition) - center).norm();
 		if (int(stepOffset) > 4 && dist > mFarDepth * 2.0f)
 		{
 			if (chunk != nullptr)
@@ -130,6 +132,8 @@ const std::vector<RosPointData>& ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, u
 		}
 	}
 
+	std::cout << mChunkDatas.size() << " " << visibleChunkIdxs.size() << std::endl;
+
 	// Generate point cloud data
 	float depthScale = 1.f / ((powf(2.f, 16.f) - 1) / mFarDepth);
 	for (size_t h = 0; h < mHeight; h++)
@@ -146,11 +150,11 @@ const std::vector<RosPointData>& ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, u
 			// point
 			Vector4 hgPoint;
 			float z = float(depth[h * mWidth + w]) * depthScale;
-			hgPoint.x = mUVBuffer[h * mWidth + w].x * z;
-			hgPoint.y = -mUVBuffer[h * mWidth + w].y * z;
-			hgPoint.z = -z;
-			hgPoint.w = 1.f;
-			hgPoint = Vector4::Transform(hgPoint, camExtrinsic);
+			hgPoint[0] = mUVBuffer[h * mWidth + w][0] * z;
+			hgPoint[1] = -mUVBuffer[h * mWidth + w][1] * z;
+			hgPoint[2] = -z;
+			hgPoint[3] = 1.f;
+			hgPoint = camExtrinsic * hgPoint;
 			memcpy(&data, &hgPoint, sizeof(float) * 3);
 			memcpy(&rosData, &hgPoint, sizeof(float) * 3);
 			// color
@@ -167,7 +171,7 @@ const std::vector<RosPointData>& ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, u
 				ChunkData& chunkData = mChunkDatas[chunkIdx];
 				Chunk* chunk = chunkData.Chunk;
 				const Vector3& center = chunkData.Center;
-				if (Chunk::Include(center, Vector3(pos.x, pos.y, pos.z)))
+				if (Chunk::Include(center, Vector3(pos[0], pos[1], pos[2])))
 				{
 					chunk->AddPoint(center, data, 3);
 					bChunkExist = true;

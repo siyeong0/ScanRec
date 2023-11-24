@@ -1,4 +1,4 @@
 #pragma once
-#include <directxtk/SimpleMath.h>
+#include <Eigen/Dense>
 
-using Quaternion = DirectX::SimpleMath::Quaternion;
+using Quaternion = Eigen::Quaternionf;

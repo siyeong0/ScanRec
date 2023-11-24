@@ -2,11 +2,12 @@
 #include "Chunk.h"
 #include <random>
 #include <opencv2/opencv.hpp>
-#include <DirectXMath.h>
 #include "MathLib.h"
 #include "ScanRec.h"
 #include <io.h>
 #include "MemPool.hpp"
+
+#include <Eigen/Dense>
 
 void TestPcdGeneration();
 void TestMemPool();
@@ -28,7 +29,7 @@ void TestPcdGeneration()
 	cv::VideoWriter videoWriter;
 	videoWriter.open("ac.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 2, cv::Size(1280, 720), true);
 
-	for (int i = 1000; i < 1700; i += 1)
+	for (int i = 0; i < 1700; i += 1)
 	{
 		std::string imagePath = basePath + "image/" + std::to_string(i) + ".jpg";
 		std::string depthPath = basePath + "depth/" + std::to_string(i) + ".png";
@@ -76,16 +77,37 @@ void TestPcdGeneration()
 		camFile.read(reinterpret_cast<char*>(&camExtrinsic), 16 * sizeof(float));
 
 		// calculate distance between prev extrinsic and curr extrinsic
-		Vector3 prevTranslation(reinterpret_cast<float*>(&prevExtrinsic._41));
-		Vector3 currTranslation(reinterpret_cast<float*>(&camExtrinsic._41));
-		Matrix prevRotMat = prevExtrinsic;
-		memset(&prevRotMat._41, 0, sizeof(float) * 3);
-		Matrix currRotMat = camExtrinsic;
-		memset(&currRotMat._41, 0, sizeof(float) * 3);
+		Vector3 prevTranslation(prevExtrinsic.coeff(0, 3), prevExtrinsic.coeff(1, 3), prevExtrinsic.coeff(2, 3));
+		Vector3 currTranslation(camExtrinsic.coeff(0, 3), camExtrinsic.coeff(1, 3), camExtrinsic.coeff(2, 3));
+		Matrix3 prevRotMat;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				prevRotMat.coeffRef(i, j) = prevExtrinsic.coeffRef(i, j);
+			}
+		}
+		Matrix3 currRotMat;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				currRotMat.coeffRef(i, j) = camExtrinsic.coeffRef(i, j);
+			}
+		}
 
-		float transDist = (currTranslation - prevTranslation).Length();
-		float rotDist = (currRotMat * prevRotMat.Transpose()).ToEuler().Length();
-		if (transDist + rotDist < 0.6f)
+		float transDist = (currTranslation - prevTranslation).norm();
+		auto vv = (currRotMat * prevRotMat.transpose()).eulerAngles(0, 1, 2);
+		auto euler = (currRotMat * prevRotMat.transpose()).eulerAngles(0, 1, 2);
+		for (int i = 0; i < 3; i++)
+		{
+			if (fabs(euler[i]) > 3.14f)
+			{
+				euler[i] = euler[i] - (euler[i] > 0.f ? 1.57f : -1.57f);
+			}
+		}
+		float rotDist = euler.norm();
+		if (transDist < 0.6f && rotDist < 0.5f)
 		{
 			continue;
 		}
@@ -97,10 +119,10 @@ void TestPcdGeneration()
 		//std::cout << "=======================" << std::endl;
 
 		ScanRec::CameraInstrinsic camIn;
-		camIn.FocalLength.x = camIntrinsic[0] / 5.f;
-		camIn.FocalLength.y = camIntrinsic[5] / 5.f;
-		camIn.Center.x = camIntrinsic[8] / 5.f;
-		camIn.Center.y = camIntrinsic[9] / 5.f;
+		camIn.FocalLength[0] = camIntrinsic[0] / 5.f;
+		camIn.FocalLength[1] = camIntrinsic[5] / 5.f;
+		camIn.Center[0] = camIntrinsic[8] / 5.f;
+		camIn.Center[1] = camIntrinsic[9] / 5.f;
 		scanRec.SetCameraIntrinsics(camIn);
 
 		scanRec.Step(camExtrinsic, rgbData, depthData);
