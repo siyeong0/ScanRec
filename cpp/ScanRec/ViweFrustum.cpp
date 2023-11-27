@@ -20,11 +20,11 @@ void ViewFrustum::Initialize(float fovAngleY, float aspectRatio, float nearZ, fl
 	mBaseFrustum = BoundingFrustum(CreatePerspectiveFovRH(fovAngleY, aspectRatio, nearZ, farZ));
 }
 
-void ViewFrustum::Update(const Vector3& position, const Matrix& orientation)
+void ViewFrustum::Update(const Matrix& transform)
 {
 	mViewFrustum = mBaseFrustum;
-	mViewFrustum.Origin = position;
-	mViewFrustum.Orientation = orientation;
+	mViewFrustum.Origin = Vector3(transform.coeff(0, 3), transform.coeff(1, 3), transform.coeff(2, 3));
+	mViewFrustum.Transform = transform;
 }
 
 bool ViewFrustum::Intersects(const BoundingBox& box) const

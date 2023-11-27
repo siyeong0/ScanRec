@@ -76,12 +76,8 @@ const std::vector<RosPointData>& ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, u
 	Assert(mRosPcdBuf.size() == 0);
 
 	Vector3 currPosition(camExtrinsic.coeff(0, 3), camExtrinsic.coeff(1, 3), camExtrinsic.coeff(2, 3));
-	Matrix orientation = camExtrinsic;
-	orientation.coeffRef(0, 3) = 0;	// Set translation factors to 0
-	orientation.coeffRef(1, 3) = 0;
-	orientation.coeffRef(2, 3) = 0;
 	// Set scanner position and orientation from camera extrinsic
-	mScannerFrustum.Update(currPosition, orientation);
+	mScannerFrustum.Update(camExtrinsic);
 
 	// Chunk managing
 	std::vector<size_t> visibleChunkIdxs;
@@ -130,6 +126,37 @@ const std::vector<RosPointData>& ScanRec::Step(Matrix& camExtrinsic, RGB* rgb, u
 
 			visibleChunkIdxs.push_back(i);
 		}
+	}
+
+	for (int i = 0; i < 7; i++)
+	{
+		for (int j = 0; j < 7; j++)
+		{
+			bool bf = false;
+			for (auto& idx : visibleChunkIdxs)
+			{
+				auto& chunkData = mChunkDatas[idx];
+				Vector3 center = chunkData.Center;
+				size_t x = size_t(roundf(center[0] / CHUNK_SIZE));
+				size_t y = size_t(roundf(center[1] / CHUNK_SIZE));
+				size_t z = size_t(roundf(center[2] / CHUNK_SIZE));
+				
+				if (x + 3 == i && z + 3 == j)
+				{
+					bf = true;
+					break;
+				}
+			}
+			if (bf)
+			{
+				std::cout << "#";
+			}
+			else
+			{
+				std::cout << " ";
+			}
+		}
+		std::cout << std::endl;
 	}
 
 	std::cout << mChunkDatas.size() << " " << visibleChunkIdxs.size() << std::endl;

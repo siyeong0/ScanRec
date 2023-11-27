@@ -22,7 +22,7 @@ struct BoundingFrustum
 	static const size_t CORNER_COUNT = 8;
 
 	Vector3 Origin;            // Origin of the frustum (and projection)
-	Matrix Orientation;       // Rotation matrix.
+	Matrix Transform;		   // Transform matrix.
 
 	float RightSlope;           // Positive X (X/Z)
 	float LeftSlope;            // Negative X
@@ -31,7 +31,7 @@ struct BoundingFrustum
 	float Near, Far;            // Z of the near plane and far plane
 
 	BoundingFrustum() :
-		Origin(0, 0, 0), Orientation(Matrix::Identity()), RightSlope(1.f), LeftSlope(-1.f),
+		Origin(0, 0, 0), Transform(Matrix::Identity()), RightSlope(1.f), LeftSlope(-1.f),
 		TopSlope(1.f), BottomSlope(-1.f), Near(0), Far(1.f) {}
 	BoundingFrustum(const Matrix& projection) { CreateFromProjection(projection); }
 
@@ -67,7 +67,7 @@ struct BoundingFrustum
 		}
 
 		Origin = Vector3(0.0f, 0.0f, 0.0f);
-		Orientation = Matrix::Identity();
+		Transform = Matrix::Identity();
 
 		// Compute the slopes
 		points[0] = points[0].cwiseProduct(Vector4(1.f / points[0][2], 1.f / points[0][2], 1.f / points[0][2], 1.f / points[0][2]));
@@ -75,61 +75,85 @@ struct BoundingFrustum
 		points[2] = points[2].cwiseProduct(Vector4(1.f / points[2][2], 1.f / points[2][2], 1.f / points[2][2], 1.f / points[2][2]));
 		points[3] = points[3].cwiseProduct(Vector4(1.f / points[3][2], 1.f / points[3][2], 1.f / points[3][2], 1.f / points[3][2]));
 
-		RightSlope = points[0][0];
-		LeftSlope = points[1][0];
-		TopSlope = points[2][1];
-		BottomSlope = points[3][1];
+		LeftSlope = points[0][0];
+		RightSlope = points[1][0];
+		BottomSlope = points[2][1];
+		TopSlope = points[3][1];
 
 		// Compute near and far.
 		points[4] = points[4].cwiseProduct(Vector4(1.f / points[4][3], 1.f / points[4][3], 1.f / points[4][3], 1.f / points[4][3]));
 		points[5] = points[5].cwiseProduct(Vector4(1.f / points[5][3], 1.f / points[5][3], 1.f / points[5][3], 1.f / points[5][3]));
 
 		// Left hand
-		//Near = points[4][2];
-		//Far = points[5][2];
+		Near = points[4][2];
+		Far = points[5][2];
 		// Right hand
-		Far = points[4][2];
-		Near = points[5][2];
+		//Far = points[4][2];
+		//Near = points[5][2];
 	}
 
+	using Plane = Eigen::Hyperplane<float, 3>;
 
 	bool Intersects(const BoundingBox& box) const
 	{
-		// Build the frustum planes
-		Vector4 planes[6];
-		planes[0] = Vector4(0.0f, 0.0f, -1.0f, Near);
-		planes[1] = Vector4(0.0f, 0.0f, 1.0f, -Far);
-		planes[2] = Vector4(1.0f, 0.0f, -RightSlope, 0.0f);
-		planes[3] = Vector4(-1.0f, 0.0f, LeftSlope, 0.0f);
-		planes[4] = Vector4(0.0f, 1.0f, -TopSlope, 0.0f);
-		planes[5] = Vector4(0.0f, -1.0f, BottomSlope, 0.0f);
+		float absNear = fabs(Near);
+		float absFar = fabs(Far);
 
-		Vector3 points[8] =
+		float nearLeft = LeftSlope * absNear;
+		float nearRight = RightSlope * absNear;
+		float nearTop = TopSlope * absNear;
+		float nearBottom = BottomSlope * absNear;
+		float farLeft = LeftSlope * absFar;
+		float farRight = RightSlope * absFar;
+		float farTop = TopSlope * absFar;
+		float farBottom = BottomSlope * absFar;
+
+		Vector4 points4[8] =
 		{
-			Vector3{LeftSlope, TopSlope, Near},
-			Vector3{RightSlope, TopSlope, Near},
-			Vector3{LeftSlope, BottomSlope, Near},
-			Vector3{RightSlope, BottomSlope, Near},
-			Vector3{LeftSlope, TopSlope, Far},
-			Vector3{RightSlope, TopSlope, Far},
-			Vector3{LeftSlope, BottomSlope, Far},
-			Vector3{RightSlope, BottomSlope, Far}
+			Vector4{nearLeft, nearTop, Near, 1.0f},
+			Vector4{nearRight, nearTop, Near, 1.0f},
+			Vector4{nearLeft, nearBottom, Near, 1.0f},
+			Vector4{nearRight, nearBottom, Near, 1.0f},
+			Vector4{farLeft, farTop, Far, 1.0f},
+			Vector4{farRight, farTop, Far, 1.0f},
+			Vector4{farLeft, farBottom, Far, 1.0f},
+			Vector4{farRight, farBottom, Far, 1.0f}
 		};
-		// Load the box
-		Matrix3 rot;
-		for (int i = 0; i < 3; i++)
+
+		Vector3 points[8];
+		for (int i = 0; i < 8; i++)
 		{
-			for (int j = 0; j < 3; j++)
-			{
-				rot.coeffRef(i, j) = Orientation.coeffRef(i, j);
-			}
+			Vector4 tp = Transform * points4[i];
+			points[i][0] = tp[0];
+			points[i][1] = tp[1];
+			points[i][2] = tp[2];
 		}
-		const Vector3& center = rot.transpose() * (box.Center - Origin);
-		const Vector3& extents = box.Extents;
-		Vector3 boxMin = center - extents;
-		Vector3 boxMax = center + extents;
+
+		auto createPlane = [](const Vector3& p0, const Vector3& p1, const Vector3& p2) -> Vector4
+		{
+			Vector3 v1 = p1 - p0;
+			Vector3 v2 = p2 - p0;
+
+			Vector3 normal = v1.cross(v2).normalized();
+			float dist = normal.dot(p0);
+			return Vector4(normal[0], normal[1], normal[2], dist);
+		};
+		Vector4 planes[6] =
+		{
+			createPlane(points[0], points[2], points[1]),
+			createPlane(points[4], points[5], points[6]),
+			createPlane(points[1], points[3], points[5]),
+			createPlane(points[0], points[4], points[2]),
+			createPlane(points[0], points[1], points[4]),
+			createPlane(points[2], points[6], points[3]),
+		};
+
+		Vector3 boxMin = box.Center - box.Extents;
+		Vector3 boxMax = box.Center + box.Extents;
 
 		size_t outCount;
+		bool bBoxInFrus = true;
+		bool bFrusInBox = true;
 		// Check box outside/inside of frustum
 		for (size_t i = 0; i < 6; ++i)
 		{
@@ -142,10 +166,7 @@ struct BoundingFrustum
 			outCount += size_t(planes[i].dot(Vector4(boxMax[0], boxMin[1], boxMax[2], 1.0f)) < 0.0f);
 			outCount += size_t(planes[i].dot(Vector4(boxMin[0], boxMax[1], boxMax[2], 1.0f)) < 0.0f);
 			outCount += size_t(planes[i].dot(Vector4(boxMax[0], boxMax[1], boxMax[2], 1.0f)) < 0.0f);
-			if (outCount != 8)
-			{
-				return true;
-			}
+			bBoxInFrus &= outCount != 8;
 		}
 
 		// Check frustum outside/inside box
@@ -154,37 +175,38 @@ struct BoundingFrustum
 		{
 			outCount += size_t(points[i][0] > boxMax[0]);
 		}
-		if (outCount != 8) return true;
+		bFrusInBox &= outCount != 8;
 		outCount = 0;
 		for (int i = 0; i < 8; i++)
 		{
-			outCount += size_t(points[i][0] > boxMin[0]);
+			outCount += size_t(points[i][0] < boxMin[0]);
 		}
-		if (outCount != 8) return true;
+		bFrusInBox &= outCount != 8;
 		outCount = 0;
 		for (int i = 0; i < 8; i++)
 		{
 			outCount += size_t(points[i][1] > boxMax[1]);
 		}
-		if (outCount != 8) return true;
+		bFrusInBox &= outCount != 8;
 		outCount = 0;
 		for (int i = 0; i < 8; i++)
 		{
-			outCount += size_t(points[i][1] > boxMin[1]);
+			outCount == size_t(points[i][1] < boxMin[1]);
 		}
-		if (outCount != 8) return true;
+		bFrusInBox &= outCount != 8;
 		outCount = 0;
 		for (int i = 0; i < 8; i++)
 		{
 			outCount += size_t(points[i][2] > boxMax[2]);
 		}
-		if (outCount != 8) return true;
+		bFrusInBox &= outCount != 8;
 		outCount = 0;
 		for (int i = 0; i < 8; i++)
 		{
-			outCount += size_t(points[i][2] > boxMin[2]);
+			outCount += size_t(points[i][2] < boxMin[2]);
 		}
+		bFrusInBox &= outCount != 8;
 
-		return false;
+		return bBoxInFrus || bFrusInBox;
 	}
 };
